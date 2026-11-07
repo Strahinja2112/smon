@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "id": "archy.smon",
+  "name": "System Monitor",
+  "version": "0.1.0",
+  "author": "archy",
+  "description": "CPU usage and temperature in the Omarchy bar and sidebar",
+  "kinds": ["bar-widget", "panel"],
+  "entryPoints": {
+    "barWidget": "Widget.qml",
+    "panel": "Panel.qml"
+  },
+  "barWidget": {
+    "displayName": "System Monitor",
+    "category": "System",
+    "allowMultiple": false,
+    "defaultSection": "right"
+  }
+}
