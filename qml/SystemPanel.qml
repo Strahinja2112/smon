@@ -920,6 +920,7 @@ SidebarPopup {
                   color: Color.accent
                   font.family: root.fontFamily
                   font.pixelSize: Style.font.bodySmall * 1.25
+                  rightPadding: Style.space(4)
                   anchors.verticalCenter: parent.verticalCenter
                 }
 
@@ -1120,6 +1121,7 @@ SidebarPopup {
                   color: Color.accent
                   font.family: root.fontFamily
                   font.pixelSize: Style.font.bodySmall * 1.25
+                  rightPadding: Style.space(4)
                   anchors.verticalCenter: parent.verticalCenter
                 }
 
@@ -1286,6 +1288,7 @@ SidebarPopup {
                   color: Color.accent
                   font.family: root.fontFamily
                   font.pixelSize: Style.font.bodySmall * 1.25
+                  rightPadding: Style.space(4)
                   anchors.verticalCenter: parent.verticalCenter
                 }
 
@@ -1467,6 +1470,7 @@ SidebarPopup {
                   color: Color.accent
                   font.family: root.fontFamily
                   font.pixelSize: Style.font.bodySmall * 1.25
+                  rightPadding: Style.space(4)
                   anchors.verticalCenter: parent.verticalCenter
                 }
 
@@ -1654,6 +1658,7 @@ SidebarPopup {
                   color: Color.accent
                   font.family: root.fontFamily
                   font.pixelSize: Style.font.bodySmall * 1.25
+                  rightPadding: Style.space(4)
                   anchors.verticalCenter: parent.verticalCenter
                 }
 
