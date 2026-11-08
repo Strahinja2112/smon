@@ -1437,28 +1437,66 @@ SidebarPopup {
                   anchors.verticalCenter: parent.verticalCenter
                 }
 
+              }
+
+              Flow {
+                width: parent.width
+                spacing: Style.space(6)
                 ModeChip {
                   id: sortCpuChip
-                  label: "CPU"
+                  label: "Sort by CPU"
                   selected: hw.topProcSort === "cpu"
-                  anchors.verticalCenter: parent.verticalCenter
                   onPicked: root.persistSetting("topProcSort", "cpu")
                 }
 
                 ModeChip {
                   id: sortRamChip
-                  label: "RAM"
+                  label: "Sort by RAM"
                   selected: hw.topProcSort === "ram"
-                  anchors.verticalCenter: parent.verticalCenter
                   onPicked: root.persistSetting("topProcSort", "ram")
                 }
 
                 ModeChip {
                   id: groupChip
-                  label: "Group"
+                  label: "Group by app"
                   selected: hw.topProcGroup
-                  anchors.verticalCenter: parent.verticalCenter
                   onPicked: root.persistSetting("topProcGroup", !hw.topProcGroup)
+                }
+                ModeChip {
+                  label: hw.topProcCount > 5 ? "Show fewer" : "Show 10"
+                  selected: hw.topProcCount > 5
+                  onPicked: {
+                    root.persistSetting("topProcCount", hw.topProcCount > 5 ? 5 : 10)
+                    Qt.callLater(function() { root.refreshWorkers(true) })
+                  }
+                }
+              }
+
+              Row {
+                width: parent.width
+                spacing: Style.space(10)
+                Text {
+                  width: parent.width - Style.space(160) - parent.spacing * 2
+                  text: "App"
+                  color: root.dimColor
+                  font.family: root.fontFamily
+                  font.pixelSize: Style.font.caption
+                }
+                Text {
+                  width: Style.space(60)
+                  text: "CPU %"
+                  horizontalAlignment: Text.AlignRight
+                  color: root.dimColor
+                  font.family: root.fontFamily
+                  font.pixelSize: Style.font.caption
+                }
+                Text {
+                  width: Style.space(100)
+                  text: "RAM used"
+                  horizontalAlignment: Text.AlignRight
+                  color: root.dimColor
+                  font.family: root.fontFamily
+                  font.pixelSize: Style.font.caption
                 }
               }
 
@@ -1497,45 +1535,52 @@ SidebarPopup {
 
                     Row {
                       width: parent.width
-                      spacing: Style.space(6)
-
-                      Text {
-                        id: procRank
-                        textFormat: Text.PlainText
-                        text: (index + 1) + "."
-                        color: sevColor
-                        font.family: root.fontFamily
-                        font.pixelSize: Style.font.bodySmall
-                        font.bold: true
-                        anchors.verticalCenter: parent.verticalCenter
+                      spacing: Style.space(10)
+                      Column {
+                        width: Math.max(0, parent.width - Style.space(160) - parent.spacing * 2)
+                        spacing: Style.space(2)
+                        Text {
+                          width: parent.width
+                          textFormat: Text.PlainText
+                          elide: Text.ElideRight
+                          text: modelData.name
+                          color: root.baseColor
+                          font.family: root.fontFamily
+                          font.pixelSize: Style.font.bodySmall
+                        }
+                        Text {
+                          width: parent.width
+                          textFormat: Text.PlainText
+                          elide: Text.ElideRight
+                          text: modelData.count > 1 ? modelData.count + " processes" : "PID " + modelData.pid
+                          color: root.dimColor
+                          font.family: root.fontFamily
+                          font.pixelSize: Style.font.caption
+                        }
                       }
-
                       Text {
+                        width: Style.space(60)
                         textFormat: Text.PlainText
-                        width: Math.max(40, parent.width - procRank.implicitWidth - procFigs.implicitWidth - parent.spacing * 2)
-                        elide: Text.ElideRight
-                        text: modelData.count > 1 ? (modelData.name + "  \u00b7 " + modelData.count + " processes") : (modelData.name + "  (" + modelData.pid + ")")
+                        horizontalAlignment: Text.AlignRight
+                        text: Math.round(modelData.cpu) + "%"
                         color: root.baseColor
                         font.family: root.fontFamily
                         font.pixelSize: Style.font.bodySmall
-                        anchors.verticalCenter: parent.verticalCenter
                       }
-
                       Text {
-                        id: procFigs
+                        width: Style.space(100)
                         textFormat: Text.PlainText
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: Model.formatGib(Model.gibFromKib(modelData.rssKib)) + " GiB \u00b7 CPU " + Math.round(modelData.cpu) + "%"
-                        color: sevColor
+                        horizontalAlignment: Text.AlignRight
+                        text: Model.formatBytes(modelData.rssKib * 1024)
+                        color: root.baseColor
                         font.family: root.fontFamily
-                        font.pixelSize: Style.font.caption
-                        font.bold: true
+                        font.pixelSize: Style.font.bodySmall
                       }
                     }
 
                     Rectangle {
                       width: parent.width
-                      height: Style.space(5)
+                      height: Style.space(3)
                       radius: height / 2
                       color: Qt.rgba(root.baseColor.r, root.baseColor.g, root.baseColor.b, 0.12)
 
@@ -1545,7 +1590,8 @@ SidebarPopup {
                         anchors.bottom: parent.bottom
                         radius: parent.radius
                         color: sevColor
-                        width: Math.max(parent.height, Math.min(parent.width, parent.width * shareD))
+                        opacity: 0.55
+                        width: Math.max(0, Math.min(parent.width, parent.width * shareD))
                         Behavior on width { enabled: root.layoutAnimated; NumberAnimation { duration: 240; easing.type: Easing.OutCubic } }
                       }
                     }
