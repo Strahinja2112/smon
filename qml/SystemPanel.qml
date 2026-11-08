@@ -40,6 +40,7 @@ SidebarPopup {
   property bool showGauges: false
   property string ramFormat: "used/total"
   property string tempFormat: "degree-unit"
+  property bool memoryDetailsOpen: false
   property bool settingsOpen: false
 
   signal fahrenheitToggled()
@@ -1145,34 +1146,28 @@ SidebarPopup {
 
                 Row {
                   width: parent.width
-
+                  spacing: Style.space(10)
                   Text {
                     textFormat: Text.PlainText
-                    text: "RAM Usage"
-                    color: Qt.darker(root.baseColor, 1.4)
-                    font.family: root.fontFamily
-                    font.pixelSize: Style.font.caption
-                    font.bold: true
-                  }
-
-                  Item {
-                    width: Math.max(0, parent.width - parent.children[0].implicitWidth - parent.children[2].implicitWidth)
-                    height: 1
-                  }
-
-                  Text {
-                    textFormat: Text.PlainText
-                    text: hw.memory ? (Model.formatGib(Model.gibFromKib(hw.memory.usedKib)) + " / " + Model.formatGib(Model.gibFromKib(hw.memory.totalKib)) + " GiB (" + Math.round(hw.memPercent) + "%)") : "–"
+                    text: hw.memory ? Model.formatGibPrecise(Model.gibFromKib(hw.memory.usedKib)) + " / " + Model.formatGibPrecise(Model.gibFromKib(hw.memory.totalKib)) + " GiB" : "–"
                     color: root.warm(root.baseColor, Model.severity(hw.memPercent, root.warnPercent, root.criticalPercent))
                     font.family: root.fontFamily
-                    font.pixelSize: Style.font.caption
+                    font.pixelSize: Style.font.title
                     font.bold: true
+                  }
+                  Text {
+                    anchors.verticalCenter: parent.verticalCenter
+                    textFormat: Text.PlainText
+                    text: hw.memPercent >= 0 ? Math.round(hw.memPercent) + "%" : "–"
+                    color: root.dimColor
+                    font.family: root.fontFamily
+                    font.pixelSize: Style.font.caption
                   }
                 }
 
                 Rectangle {
                   width: parent.width
-                  height: Style.space(6)
+                  height: Style.space(10)
                   radius: height / 2
                   color: Qt.rgba(root.baseColor.r, root.baseColor.g, root.baseColor.b, 0.12)
 
@@ -1182,12 +1177,35 @@ SidebarPopup {
                     anchors.bottom: parent.bottom
                     radius: parent.radius
                     color: root.warm(root.baseColor, Model.severity(hw.memPercent, root.warnPercent, root.criticalPercent))
-                    width: hw.memPercent >= 0 ? Math.max(parent.height, Math.min(parent.width, parent.width * (hw.memPercent / 100))) : 0
+                    width: hw.memPercent >= 0 ? Math.max(0, Math.min(parent.width, parent.width * (hw.memPercent / 100))) : 0
                     Behavior on width { enabled: root.layoutAnimated; NumberAnimation { duration: 320; easing.type: Easing.OutCubic } }
                   }
                 }
               }
 
+              Row {
+                width: parent.width
+                spacing: Style.space(16)
+                InfoPair {
+                  width: (parent.width - parent.spacing) / 2
+                  label: "Available"
+                  value: hw.memory ? Model.formatGibPrecise(Model.gibFromKib(hw.memory.availableKib)) + " GiB" : "–"
+                }
+                InfoPair {
+                  width: (parent.width - parent.spacing) / 2
+                  label: "Swap Used"
+                  value: hw.memory ? Model.formatGibPrecise(Model.gibFromKib(hw.memory.swapUsedKib)) + " GiB" : "–"
+                }
+              }
+              ModeChip {
+                label: root.memoryDetailsOpen ? "Hide memory details" : "Memory details"
+                selected: root.memoryDetailsOpen
+                onPicked: root.memoryDetailsOpen = !root.memoryDetailsOpen
+              }
+              Column {
+                visible: root.memoryDetailsOpen
+                width: parent.width
+                spacing: Style.space(10)
               // Details
               Row {
                 width: parent.width
@@ -1198,10 +1216,6 @@ SidebarPopup {
                   spacing: Style.spacing.labelGap
 
                   InfoPair {
-                    label: "Available"
-                    value: hw.memory ? (Model.formatGib(Model.gibFromKib(hw.memory.availableKib)) + " GiB") : "–"
-                  }
-                  InfoPair {
                     label: "Page Cache"
                     value: hw.memory ? (Model.formatGib(Model.gibFromKib(hw.memory.cachedKib)) + " GiB") : "–"
                   }
@@ -1211,10 +1225,6 @@ SidebarPopup {
                   width: (parent.width - parent.spacing) / 2
                   spacing: Style.spacing.labelGap
 
-                  InfoPair {
-                    label: "Swap Used"
-                    value: hw.memory && hw.memory.swapTotalKib > 0 ? (Model.formatGib(Model.gibFromKib(hw.memory.swapUsedKib)) + " GiB") : "0 GiB"
-                  }
                   InfoPair {
                     label: "Swap Total"
                     value: hw.memory && hw.memory.swapTotalKib > 0 ? (Model.formatGib(Model.gibFromKib(hw.memory.swapTotalKib)) + " GiB") : "None"
@@ -1329,6 +1339,8 @@ SidebarPopup {
                   value: hw.memory ? Model.formatRatio(hw.memory.zswappedKib * 1024, hw.memory.zswapKib * 1024) : "–"
                 }
               }
+              }
+
             }
           }
 
