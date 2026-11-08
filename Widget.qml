@@ -1,33 +1,920 @@
 import QtQuick
 import Quickshell
+import Quickshell.Io
 import qs.Commons
 import qs.Ui
+import "Model.js" as Model
 
-Item {
+// Telemetry readouts for GPU, CPU, Temperatures, and Memory in the Omarchy bar
+// with rich per-item data selection, ordering, and formatting controls.
+//
+// Left click opens the Omarchy system panel popup (or runs clickCommand if set).
+// Right click walks the display modes and remembers the choice; middle click resamples.
+Panel {
   id: root
-  property var bar: null
-  property bool opened: false
-  Metrics { id: metrics }
-  implicitWidth: label.implicitWidth + Style.space(16)
-  implicitHeight: Style.barHeight
-  BarButton {
+  moduleName: "archy.smon"
+  ipcTarget: "archy.smon"
+  manageIpc: false
+
+  readonly property bool vertical: bar ? bar.vertical : false
+
+  function broadcast(method) {
+    var items = bar && typeof bar.moduleWidgets === "function"
+      ? bar.moduleWidgets(moduleName) : [root]
+    for (var i = 0; i < items.length; i++) {
+      if (items[i] && typeof items[i][method] === "function") items[i][method]()
+    }
+  }
+
+  // Four states, cycled by right click:
+  //   icons    Sleek component glyphs + live figures (Noctalia-style readout, default)
+  //   compact  glyphs + gauges
+  //   full     glyphs + gauges + temperatures
+  //   labels   Waybar-style text readout — GPU 0% · CPU 34% · TEMP 46°C · RAM 11/23G
+  readonly property var modes: ["icons", "compact", "full", "labels"]
+  readonly property string mode: {
+    var want = String(setting("mode", "icons")).trim().toLowerCase()
+    return modes.indexOf(want) === -1 ? "icons" : want
+  }
+
+  readonly property string nextMode: modes[(modes.indexOf(mode) + 1) % modes.length]
+  readonly property bool labelled: mode === "labels" && !vertical
+  readonly property bool showTemps: mode !== "compact" && !vertical
+  readonly property bool showValues: (labelled || mode === "icons" || boolSetting("showValues", false)) && !vertical
+  readonly property bool showGauges: boolSetting("showGauges", mode !== "icons" && mode !== "labels")
+  readonly property bool showClocks: boolSetting("showClocks", false) && !vertical
+
+  readonly property var monitors: {
+    var raw = setting("monitors", [])
+    if (raw === undefined || raw === null) return []
+    if (raw instanceof Array) return raw.map(String)
+    var text = String(raw).trim()
+    return text === "" ? [] : text.split(/[,\s]+/)
+  }
+
+  readonly property string screenName: {
+    var window = root.QsWindow ? root.QsWindow.window : null
+    return window && window.screen ? String(window.screen.name) : ""
+  }
+
+  readonly property bool onThisScreen: monitors.length === 0 || screenName === ""
+    || monitors.indexOf(screenName) !== -1
+
+  // -------------------------------------------------------- data selection
+
+  readonly property bool showGpu: boolSetting("showGpu", true)
+  readonly property bool showCpu: boolSetting("showCpu", true)
+  readonly property bool showCpuTemp: boolSetting("showCpuTemp", true)
+  readonly property bool showGpuTemp: boolSetting("showGpuTemp", false)
+  readonly property bool showRam: boolSetting("showRam", true)
+  readonly property bool showTopProcs: boolSetting("showTopProcs", true)
+  readonly property bool showDisks: boolSetting("showDisks", true)
+
+  readonly property var itemOrder: {
+    var raw = setting("itemsOrder", ["gpu", "cpu", "cpu-temp", "ram"])
+    if (raw instanceof Array) return raw.map(function(s) { return String(s).trim().toLowerCase() })
+    var text = String(raw || "").trim().toLowerCase()
+    return text === "" ? ["gpu", "cpu", "cpu-temp", "ram"] : text.split(/[,\s]+/)
+  }
+
+  // Every orderable list in full, for the panel's settings drawer.
+  readonly property var barOrder: Model.normalizeOrder(itemOrder, Model.BAR_ITEMS)
+  readonly property var panelSections: Model.normalizeOrder(setting("panelSections", []), Model.PANEL_SECTIONS)
+  readonly property var panelSectionsHidden: Model.keyList(setting("panelSectionsHidden", []))
+  readonly property var panelSectionsCollapsed: Model.keyList(setting("panelSectionsCollapsed", []))
+  readonly property var panelDials: Model.normalizeOrder(setting("panelDials", []), Model.PANEL_DIALS)
+  readonly property var panelDialsHidden: Model.keyList(setting("panelDialsHidden", []))
+  readonly property var diskHideMounts: Model.stringList(setting("diskHideMounts", Model.DISK_HIDE_DEFAULT))
+
+  // ------------------------------------------------------------ formatting
+
+  readonly property bool fahrenheit: boolSetting("fahrenheit", false)
+  readonly property string ramFormat: {
+    var want = String(setting("ramFormat", "used/total")).trim().toLowerCase()
+    return ["used/total", "used", "percent", "free", "available"].indexOf(want) === -1 ? "used/total" : want
+  }
+
+  readonly property string tempFormat: {
+    var want = String(setting("tempFormat", "degree-unit")).trim().toLowerCase()
+    return ["degree-unit", "degree", "unit", "unit-lower", "bare"].indexOf(want) === -1 ? "degree-unit" : want
+  }
+
+  readonly property string percentPad: {
+    var want = String(setting("percentPad", mode === "icons" ? "none" : "zero")).trim().toLowerCase()
+    if (want === "space") want = "trail"
+    return ["lead", "zero", "trail", "none"].indexOf(want) === -1 ? (mode === "icons" ? "none" : "zero") : want
+  }
+
+  readonly property real padOpacity: {
+    var n = Number(setting("padOpacity", 0.3))
+    return isFinite(n) ? Math.max(0, Math.min(1, n)) : 0.3
+  }
+
+  readonly property int iconSizeSetting: intSetting("iconSize", 0, 0, 48)
+  readonly property int iconSize: iconSizeSetting > 0 ? iconSizeSetting : Style.bar.iconFont
+  readonly property int valueSize: Math.max(9, Math.round(iconSize * 0.92))
+
+  readonly property int warnPercent: intSetting("warnPercent", 70, 1, 100)
+  readonly property int criticalPercent: intSetting("criticalPercent", 90, 1, 100)
+  readonly property int warnTempC: intSetting("warnTempC", 75, 1, 150)
+  readonly property int criticalTempC: intSetting("criticalTempC", 90, 1, 150)
+  readonly property int diskWarnPercent: intSetting("diskWarnPercent", 80, 1, 100)
+  readonly property int diskCriticalPercent: intSetting("diskCriticalPercent", 95, 1, 100)
+
+  readonly property string clickCommand: String(setting("clickCommand", ""))
+
+  // ----------------------------------------------------------------- glyphs
+
+  readonly property string gpuIcon: String(setting("gpuIcon", "󰾲"))
+  readonly property string cpuIcon: String(setting("cpuIcon", ""))
+  readonly property string tempIcon: String(setting("tempIcon", ""))
+  readonly property string gpuTempIcon: String(setting("gpuTempIcon", "󰔏"))
+  readonly property string ramIcon: String(setting("ramIcon", ""))
+  readonly property string clockIcon: String(setting("clockIcon", "󰓅"))
+
+  readonly property int gpuIconRotation: intSetting("gpuIconRotation", 0, -360, 360)
+  readonly property int cpuIconRotation: intSetting("cpuIconRotation", 0, -360, 360)
+  readonly property int tempIconRotation: intSetting("tempIconRotation", 0, -360, 360)
+  readonly property int ramIconRotation: intSetting("ramIconRotation", 0, -360, 360)
+
+  function boolSetting(name, fallback) {
+    var value = setting(name, fallback)
+    if (typeof value === "boolean") return value
+    var text = String(value).trim().toLowerCase()
+    if (["true", "1", "yes", "on"].indexOf(text) !== -1) return true
+    if (["false", "0", "no", "off"].indexOf(text) !== -1) return false
+    return fallback
+  }
+
+  function intSetting(name, fallback, min, max) {
+    var n = parseInt(String(setting(name, fallback)), 10)
+    if (!isFinite(n)) n = fallback
+    return Math.max(min, Math.min(max, n))
+  }
+
+  // ------------------------------------------------------------------ color
+
+  readonly property color base: bar ? bar.barForeground : Color.foreground
+  readonly property color hot: bar ? bar.urgent : Color.urgent
+  readonly property color dim: Qt.darker(base, 1.45)
+  readonly property string fontFamily: bar ? bar.fontFamily : Style.font.family
+
+  function warm(from, amount) {
+    if (!(amount > 0)) return from
+    var t = Math.min(1, amount)
+    return Qt.rgba(from.r + (hot.r - from.r) * t,
+                   from.g + (hot.g - from.g) * t,
+                   from.b + (hot.b - from.b) * t,
+                   from.a)
+  }
+
+  function tempColor(tempC) {
+    if (!isFinite(tempC) || tempC <= 0) return dim
+    if (tempC < 50) return dim
+    var t = Math.min(1, Math.max(0, (tempC - 50) / Math.max(1, criticalTempC - 50)))
+    return Qt.rgba(base.r + (hot.r - base.r) * t,
+                   base.g + (hot.g - base.g) * t,
+                   base.b + (hot.b - base.b) * t,
+                   base.a)
+  }
+
+  // Each figure reserves the width of its usual two digits in the chosen
+  // format, so 5% → 15% does not shove the neighbours along, but nothing is
+  // held open for a rare third digit (100%, 100°C): that just grows the cell.
+  // RAM reserves nothing: its digit count changes only when usage crosses
+  // 10 GiB, and a reserved "00.0/00G" left a gap every other minute.
+  readonly property int percentSlot: Math.ceil(percentMetrics.advanceWidth)
+  readonly property int tempSlot: Math.ceil(tempMetrics.advanceWidth)
+
+  readonly property string tempTemplate: {
+    var unit = fahrenheit ? "F" : "C"
+    var text = fahrenheit ? "000" : "00"
+    if (tempFormat === "degree-unit") text += "°" + unit
+    else if (tempFormat === "degree") text += "°"
+    else if (tempFormat === "unit") text += unit
+    else if (tempFormat === "unit-lower") text += unit.toLowerCase()
+    return (labelled || percentPad === "lead") ? Model.padLeft(text, 3) : text
+  }
+
+  TextMetrics {
+    id: percentMetrics
+    font.family: root.fontFamily
+    font.pixelSize: root.valueSize
+    font.bold: true
+    text: "00%"
+  }
+
+  TextMetrics {
+    id: tempMetrics
+    font.family: root.fontFamily
+    font.pixelSize: root.valueSize
+    text: root.tempTemplate
+  }
+
+  // --------------------------------------------------------------- readings
+
+  // Each monitor's bar builds its own copy of this widget, and only one copy
+  // samples: the first in the bar's list that draws on its screen. The others
+  // show its readings. bar.moduleWidgets() reads the bar's host list, so this
+  // re-runs when a copy comes or goes (a monitor plugged or unplugged) and the
+  // next copy takes over.
+  Service {
+    id: ownService
+    settings: root.settings
+    active: root.onThisScreen && root.sampling
+  }
+
+  readonly property QtObject ownHw: ownService
+  readonly property var samplerWidget: {
+    var items = bar && typeof bar.moduleWidgets === "function" ? bar.moduleWidgets(moduleName) : []
+    for (var i = 0; i < items.length; i++) {
+      var w = items[i]
+      if (w && w.onThisScreen === true && w.ownHw) return w
+    }
+    return root
+  }
+  readonly property bool sampling: samplerWidget === root
+  // A QtObject property drops to null when its object is destroyed, so a
+  // copy whose sampler is torn down falls back to its own (idle) service
+  // until the binding above names the next sampler.
+  readonly property QtObject samplerHw: samplerWidget ? samplerWidget.ownHw : null
+  readonly property QtObject hw: samplerHw ? samplerHw : ownService
+
+  function percentPadFor(value) {
+    if (percentPad !== "zero") return ""
+    if (!isFinite(value) || value < 0) return ""
+    return Math.round(value) < 10 ? "0" : ""
+  }
+
+  function percentText(value) {
+    if (percentPad === "lead") return Model.padLeft(Model.formatPercent(value), 3)
+    return Model.formatPercent(value)
+  }
+
+  function tempText(celsius) {
+    var figure = Model.tempNumber(celsius, fahrenheit)
+    if (figure === "–") return Model.padLeft(figure, 3)
+
+    var unit = fahrenheit ? "F" : "C"
+    var text = figure
+    if (tempFormat === "degree-unit") text += "°" + unit
+    else if (tempFormat === "degree") text += "°"
+    else if (tempFormat === "unit") text += unit
+    else if (tempFormat === "unit-lower") text += unit.toLowerCase()
+    return (labelled || percentPad === "lead") ? Model.padLeft(text, 3) : text
+  }
+
+  function ramText() {
+    if (ramFormat === "percent") return percentText(hw.memPercent)
+    if (!hw.memory) return "–"
+
+    var usedGib = Model.gibFromKib(hw.memory.usedKib)
+    var totalGib = Model.gibFromKib(hw.memory.totalKib)
+    var availGib = Model.gibFromKib(hw.memory.availableKib)
+
+    if (ramFormat === "used") {
+      return Model.formatGibPrecise(usedGib) + "G"
+    }
+
+    if (ramFormat === "free" || ramFormat === "available") {
+      return Model.formatGibPrecise(availGib) + "G"
+    }
+
+    if (labelled) {
+      return Model.formatGibPrecise(usedGib) + "/" + Model.formatGib(totalGib) + "G"
+    }
+
+    if (mode === "icons") {
+      return Model.formatGib(usedGib) + "/" + Model.formatGib(totalGib) + "G"
+    }
+
+    var used = Model.formatGib(usedGib)
+    var total = Model.formatGib(totalGib)
+    return Model.padLeft(used, 3) + "/" + total
+  }
+
+  // ------------------------------------------------------------- cell output
+
+  readonly property var cells: {
+    var cellMap = {}
+
+    // GPU Load
+    if (showGpu && hw.hasGpu) {
+      var busy = hw.gpuPercent
+      var meterValue = busy >= 0 ? busy : hw.gpuVramPercent
+      cellMap["gpu"] = {
+        key: "gpu",
+        label: "GPU",
+        icon: gpuIcon,
+        iconRotation: gpuIconRotation,
+        value: percentText(meterValue),
+        pad: percentPadFor(meterValue),
+        slotted: percentPad === "trail",
+        temp: (mode === "full" || mode === "labels") && hw.gpuTempC > 0 ? tempText(hw.gpuTempC) : "",
+        tempC: hw.gpuTempC,
+        clock: Model.formatGhzShort(hw.gpuMhz),
+        ratio: meterValue >= 0 ? meterValue / 100 : 0,
+        severity: Model.severity(busy, warnPercent, criticalPercent)
+      }
+    }
+
+    // CPU Load
+    if (showCpu) {
+      cellMap["cpu"] = {
+        key: "cpu",
+        label: "CPU",
+        icon: cpuIcon,
+        iconRotation: cpuIconRotation,
+        value: percentText(hw.cpuPercent),
+        pad: percentPadFor(hw.cpuPercent),
+        slotted: percentPad === "trail",
+        temp: (mode === "full" || mode === "labels") && hw.cpuTempC > 0 ? tempText(hw.cpuTempC) : "",
+        tempC: hw.cpuTempC,
+        clock: Model.formatGhzShort(hw.cpuMhz),
+        ratio: hw.cpuPercent >= 0 ? hw.cpuPercent / 100 : 0,
+        severity: Model.severity(hw.cpuPercent, warnPercent, criticalPercent)
+      }
+    }
+
+    // CPU Temperature (standalone cell used in 'icons' mode)
+    if (showCpuTemp && hw.cpuTempC > 0 && showTemps && mode === "icons") {
+      cellMap["cpu-temp"] = {
+        key: "cpu-temp",
+        label: "TEMP",
+        icon: tempIcon,
+        iconRotation: tempIconRotation,
+        value: tempText(hw.cpuTempC),
+        pad: "",
+        slotted: false,
+        temp: "",
+        tempC: hw.cpuTempC,
+        clock: "",
+        ratio: Math.min(1, Math.max(0, (hw.cpuTempC - 30) / Math.max(1, criticalTempC - 30))),
+        severity: Model.severity(hw.cpuTempC, warnTempC, criticalTempC)
+      }
+    }
+
+    // GPU Temperature (standalone cell used in 'icons' mode)
+    if (showGpuTemp && hw.hasGpu && hw.gpuTempC > 0 && showTemps && mode === "icons") {
+      cellMap["gpu-temp"] = {
+        key: "gpu-temp",
+        label: "GPU°",
+        icon: gpuTempIcon,
+        iconRotation: gpuIconRotation,
+        value: tempText(hw.gpuTempC),
+        pad: "",
+        slotted: false,
+        temp: "",
+        tempC: hw.gpuTempC,
+        clock: "",
+        ratio: Math.min(1, Math.max(0, (hw.gpuTempC - 30) / Math.max(1, criticalTempC - 30))),
+        severity: Model.severity(hw.gpuTempC, warnTempC, criticalTempC)
+      }
+    }
+
+    // RAM
+    if (showRam) {
+      cellMap["ram"] = {
+        key: "ram",
+        label: "RAM",
+        icon: ramIcon,
+        iconRotation: ramIconRotation,
+        value: ramText(),
+        pad: "",
+        slotted: false,
+        temp: "",
+        tempC: -1,
+        clock: "",
+        ratio: hw.memPercent >= 0 ? hw.memPercent / 100 : 0,
+        severity: Model.severity(hw.memPercent, warnPercent, criticalPercent)
+      }
+    }
+
+    var out = []
+    var added = {}
+    for (var i = 0; i < itemOrder.length; i++) {
+      var k = itemOrder[i]
+      if (cellMap[k] && !added[k]) {
+        out.push(cellMap[k])
+        added[k] = true
+      }
+    }
+    // Append any enabled items not in itemOrder
+    var fallbackOrder = ["gpu", "cpu", "cpu-temp", "gpu-temp", "ram"]
+    for (var j = 0; j < fallbackOrder.length; j++) {
+      var fk = fallbackOrder[j]
+      if (cellMap[fk] && !added[fk]) {
+        out.push(cellMap[fk])
+        added[fk] = true
+      }
+    }
+
+    return out
+  }
+
+  // `cells` is a new array on every sample, and a Repeater handed a new array
+  // destroys and rebuilds every cell, which also makes the bar re-measure
+  // itself. The Repeaters get the key list instead, a new array only when a
+  // cell appears or goes, and each cell reads its current values by key.
+  readonly property string cellKeyList: cells.map(function(c) { return c.key }).join(",")
+  readonly property var cellKeys: cellKeyList ? cellKeyList.split(",") : []
+
+  function cellFor(key) {
+    for (var i = 0; i < cells.length; i++)
+      if (cells[i].key === key) return cells[i]
+    // A cell just switched off can read once more before its delegate goes.
+    return { key: key, label: "", icon: "", iconRotation: 0, value: "", pad: "", slotted: false,
+             temp: "", tempC: -1, clock: "", ratio: 0, severity: 0 }
+  }
+
+  // ---------------------------------------------------------------- tooltip
+
+  readonly property string monitorName: {
+    var parts = clickCommand.split(/\s+/)
+    var last = String(parts[parts.length - 1] || "")
+    return last.substring(last.lastIndexOf("/") + 1)
+  }
+
+  readonly property string hint: clickCommand === ""
+    ? "Hardware · right click for " + nextMode
+    : "Click for " + monitorName + " · right click for " + nextMode
+
+  function detail() {
+    var lines = []
+
+    var cpu = "CPU  " + Model.formatPercent(hw.cpuPercent)
+    if (hw.cpuTempC > 0) cpu += "  ·  " + Model.formatTemp(hw.cpuTempC, fahrenheit)
+    if (hw.cpuMhz > 0) cpu += "  ·  " + Model.formatGhz(hw.cpuMhz)
+    lines.push(cpu)
+    if (hw.cpuInfo && hw.cpuInfo.model) {
+      lines.push(hw.cpuInfo.model + " · " + hw.cpuInfo.cores + "C/" + hw.cpuInfo.threads + "T")
+    }
+    if (hw.load) {
+      lines.push("Load " + hw.load.one.toFixed(2) + "  " + hw.load.five.toFixed(2) + "  " + hw.load.fifteen.toFixed(2))
+    }
+
+    if (hw.hasGpu) {
+      lines.push("")
+      var gpu = "GPU  " + Model.formatPercent(hw.gpuPercent)
+      if (hw.gpuWatts >= 0) gpu += "  ·  " + Model.formatWatts(hw.gpuWatts)
+      lines.push(gpu)
+      lines.push(String(hw.gpuInfo.name))
+      if (hw.gpuVramTotalBytes > 0) {
+        lines.push("VRAM " + Model.formatGib(Model.gibFromBytes(hw.gpuVramUsedBytes)) + " / "
+                   + Model.formatGib(Model.gibFromBytes(hw.gpuVramTotalBytes)) + " GiB  ·  "
+                   + Model.formatPercent(hw.gpuVramPercent))
+      }
+      var extras = []
+      if (hw.gpuRpm >= 0) extras.push("Fan " + Model.formatRpm(hw.gpuRpm))
+      if (hw.gpuMhz > 0) extras.push(Model.formatGhz(hw.gpuMhz))
+      if (extras.length > 0) lines.push(extras.join("  ·  "))
+    }
+
+    if (hw.memory) {
+      lines.push("")
+      lines.push("RAM  " + Model.formatGib(Model.gibFromKib(hw.memory.usedKib)) + " / "
+                 + Model.formatGib(Model.gibFromKib(hw.memory.totalKib)) + " GiB  ·  "
+                 + Model.formatPercent(hw.memory.percent))
+      lines.push("Cache " + Model.formatGib(Model.gibFromKib(hw.memory.cachedKib)) + " GiB"
+                 + (hw.memory.swapTotalKib > 0
+                    ? "  ·  Swap " + Model.formatGib(Model.gibFromKib(hw.memory.swapUsedKib)) + " / "
+                      + Model.formatGib(Model.gibFromKib(hw.memory.swapTotalKib)) + " GiB"
+                    : ""))
+    }
+
+    return lines.join("\n")
+  }
+
+  // ----------------------------------------------------------------- actions
+
+  function refresh() {
+    hw.sample()
+  }
+
+  function currentEntry() {
+    var config = root.bar && root.bar.shell ? root.bar.shell.shellConfig : null
+    var layout = config && config.bar ? config.bar.layout : null
+    var sections = ["left", "center", "right"]
+    for (var s = 0; layout && s < sections.length; s++) {
+      var entries = layout[sections[s]] || []
+      for (var i = 0; i < entries.length; i++) {
+        if (entries[i] && String(entries[i].id) === root.moduleName) return entries[i]
+      }
+    }
+    return root.settings || {}
+  }
+
+  function persistSetting(key, value) {
+    var changes = {}
+    changes[key] = value
+    persistSettings(changes)
+  }
+
+  // Several keys in one write, so a toggle that touches two settings does not
+  // race its own first half.
+  // A change from the bar or the panel shows at once (root.settings) and is
+  // written to shell.json 0.8 s later, merged with any changes made meanwhile:
+  // the write copies and reloads the whole shell config on the UI thread,
+  // which made every click lag. Copies on other monitors follow once written.
+  property var _pendingEntry: null
+
+  function persistSettings(changes) {
+    var live = root._pendingEntry || currentEntry()
+    var entry = { id: root.moduleName }
+    for (var k in live) if (k !== "id") entry[k] = live[k]
+    for (var c in changes) entry[c] = changes[c]
+    root.settings = entry
+    root._pendingEntry = entry
+    settingsSave.restart()
+  }
+
+  function flushSettings() {
+    var entry = root._pendingEntry
+    if (!entry) return
+    root._pendingEntry = null
+    settingsSave.stop()
+    if (root.bar && root.bar.shell && typeof root.bar.shell.updateEntryInline === "function") {
+      root.bar.shell.updateEntryInline(root.moduleName, entry)
+    }
+  }
+
+  Timer {
+    id: settingsSave
+    interval: 800
+    onTriggered: root.flushSettings()
+  }
+
+  // A widget reloaded or removed within the 0.8 s still saves its change.
+  Component.onDestruction: flushSettings()
+
+  // Hovering the widget starts the panel's process list and storage scan, so
+  // they are usually ready by the click. Skipped for sections that are hidden
+  // or folded, and when a clickCommand replaces the panel.
+  Connections {
+    target: button
+    function onTooltipHoveredChanged() {
+      if (!button.tooltipHovered || root.opened || root.clickCommand !== "") return
+      root.hw.prefetchPanel(systemPanel.sectionShown("procs") && !systemPanel.sectionCollapsed("procs"),
+                            systemPanel.sectionShown("storage") && !systemPanel.sectionCollapsed("storage"))
+    }
+  }
+
+  function cycleMode() {
+    var live = currentEntry()
+
+    var from = String(live.mode === undefined || live.mode === null ? mode : live.mode).trim().toLowerCase()
+    if (modes.indexOf(from) === -1) from = mode
+    var next = modes[(modes.indexOf(from) + 1) % modes.length]
+
+    persistSetting("mode", next)
+  }
+
+  function toggleFahrenheit() {
+    persistSetting("fahrenheit", !fahrenheit)
+  }
+
+  function launchMonitor() {
+    if (clickCommand === "") {
+      root.toggle()
+      return
+    }
+    if (root.bar) root.bar.run(clickCommand)
+    else Quickshell.execDetached(["bash", "-lc", clickCommand])
+  }
+
+  IpcHandler {
+    target: "archy.smon"
+
+    function open(): void { root.open() }
+    function close(): void { root.close() }
+    function show(): void { root.open() }
+    function hide(): void { root.close() }
+    function toggle(): void { root.toggle() }
+    function toggleFahrenheit(): void { root.toggleFahrenheit() }
+    function refresh(): void { root.broadcast("refresh") }
+    function cycleMode(): void { root.cycleMode() }
+    function status(): string { return root.detail() }
+  }
+
+  // ------------------------------------------------------------------ layout
+
+  readonly property int glyphBox: Math.max(Style.bar.iconCanvas, iconSize + Style.space(2))
+  readonly property int contentHeight: Math.max(glyphBox, Style.space(15))
+  readonly property int gaugeWidth: Math.max(6, Math.round(iconSize * 0.45))
+  readonly property int gaugeHeight: Math.max(11, Math.round(iconSize * 0.9))
+
+  visible: onThisScreen
+  implicitWidth: onThisScreen ? button.implicitWidth : 0
+  implicitHeight: button.implicitHeight
+
+  WidgetButton {
     id: button
     anchors.fill: parent
     bar: root.bar
-    text: "󰍛 %1%  %2".arg(metrics.cpu).arg(metrics.temperature)
-    onPressed: root.opened = !root.opened
-  }
-  KeyboardPanel {
-    anchorItem: button
-    owner: root
-    bar: root.bar
-    open: root.opened
-    contentWidth: Style.space(240)
-    content: Column {
-      spacing: Style.space(8)
-      Text { text: "CPU  %1%".arg(metrics.cpu); color: Style.colors.text; textFormat: Text.PlainText }
-      Text { text: "CPU temperature  %1".arg(metrics.temperature); color: Style.colors.text; textFormat: Text.PlainText }
+    labelVisible: false
+    hasVisualContent: root.cells.length > 0
+    tooltipText: root.hint
+    horizontalMargin: 6
+    fixedWidth: root.vertical ? -1 : Math.ceil(horizontalCells.implicitWidth + button.scaledHorizontalMargin * 2)
+    fixedHeight: root.vertical ? Math.ceil(verticalCells.implicitHeight + Style.space(8)) : -1
+
+    onPressed: function(pressedButton) {
+      if (pressedButton === Qt.RightButton) root.cycleMode()
+      else if (pressedButton === Qt.MiddleButton) root.refresh()
+      else root.launchMonitor()
+    }
+
+    Row {
+      id: horizontalCells
+      visible: !root.vertical
+      anchors.centerIn: parent
+      spacing: Style.space(root.mode === "icons" ? 10 : 8)
+
+      Repeater {
+        model: root.vertical ? [] : root.cellKeys
+        delegate: cell
+      }
+    }
+
+    Column {
+      id: verticalCells
+      visible: root.vertical
+      anchors.centerIn: parent
+      spacing: Style.space(5)
+
+      Repeater {
+        model: root.vertical ? root.cellKeys.filter(function(key) { return key !== "cpu-temp" }) : []
+        delegate: Column {
+          id: verticalGroup
+          required property string modelData
+          readonly property var data: root.cellFor(modelData)
+          width: root.barSize
+          spacing: Style.space(4)
+
+          Rectangle {
+            visible: verticalGroup.modelData === "ram"
+            width: parent.width * 0.6
+            height: Style.space(1)
+            anchors.horizontalCenter: parent.horizontalCenter
+            color: root.dim
+            opacity: 0.55
+          }
+          OpticalGlyph {
+            width: parent.width
+            height: root.glyphBox
+            text: verticalGroup.data.icon
+            fontFamily: root.fontFamily
+            fontSize: root.iconSize
+            color: root.base
+          }
+          Text {
+            width: parent.width
+            textFormat: Text.PlainText
+            text: verticalGroup.modelData === "cpu"
+              ? (root.hw.cpuTempC > 0 ? root.tempText(root.hw.cpuTempC) : "—°C")
+              : verticalGroup.modelData === "ram"
+                ? Model.gibFromKib(root.hw.memory.usedKib).toFixed(1) + "G"
+                : verticalGroup.data.value
+            horizontalAlignment: Text.AlignHCenter
+            color: root.base
+            font.family: root.fontFamily
+            font.pixelSize: root.valueSize
+          }
+        }
+      }
     }
   }
-  Text { id: label; visible: false }
+
+  SystemPanel {
+    id: systemPanel
+    anchorItem: button
+    bar: root.bar
+    owner: root
+    open: root.opened
+    hw: root.hw
+    mode: root.mode
+    showGpu: root.showGpu
+    showCpu: root.showCpu
+    showCpuTemp: root.showCpuTemp
+    showGpuTemp: root.showGpuTemp
+    showRam: root.showRam
+    showTopProcs: root.showTopProcs
+    showDisks: root.showDisks
+    barOrder: root.barOrder
+    sectionOrder: root.panelSections
+    sectionsHidden: root.panelSectionsHidden
+    sectionsCollapsed: root.panelSectionsCollapsed
+    dialOrder: root.panelDials
+    dialsHidden: root.panelDialsHidden
+    diskHideMounts: root.diskHideMounts
+    showClocks: root.showClocks
+    showGauges: root.showGauges
+    ramFormat: root.ramFormat
+    tempFormat: root.tempFormat
+    fahrenheit: root.fahrenheit
+    warnPercent: root.warnPercent
+    criticalPercent: root.criticalPercent
+    warnTempC: root.warnTempC
+    criticalTempC: root.criticalTempC
+    diskWarnPercent: root.diskWarnPercent
+    diskCriticalPercent: root.diskCriticalPercent
+  }
+
+  // A component group: glyph + figure (+ temp)
+  Component {
+    id: cell
+
+    Row {
+      id: group
+      required property var modelData
+      readonly property var cellData: root.cellFor(modelData)
+      spacing: Style.space(4)
+
+      // Every figure cell reserves its slot width: a single-digit value keeps
+      // an invisible trailing gap instead of pulling its neighbours around.
+      // The old trail-only reservation is subsumed by this. The slot covers the
+      // last cell too, so the bar never re-lays itself out when the final
+      // reading gains or loses a digit.
+      readonly property int figureSlot: group.isTempCell ? root.tempSlot
+        : (group.cellData.key === "ram" ? 0 : root.percentSlot)
+      // Measured on the whole figure, zero-pad digit included.
+      readonly property real slack: root.showValues
+        ? Math.max(0, group.figureSlot - valueRow.implicitWidth - spacing)
+        : 0
+
+      readonly property bool isTempCell: group.cellData.key === "cpu-temp" || group.cellData.key === "gpu-temp"
+
+      TextMetrics {
+        id: glyphMetrics
+        font.family: root.fontFamily
+        font.pixelSize: root.iconSize
+        text: group.cellData.icon
+      }
+
+      Item {
+        readonly property bool turned: Math.abs(group.cellData.iconRotation % 180) === 90
+        readonly property real inkWidth: turned
+          ? glyphMetrics.tightBoundingRect.height
+          : glyphMetrics.tightBoundingRect.width
+
+        visible: !root.labelled
+        width: visible ? Math.max(1, Math.ceil(inkWidth)) : 0
+        height: root.contentHeight
+
+        OpticalGlyph {
+          anchors.fill: parent
+          visible: group.cellData.iconRotation === 0
+          text: group.cellData.icon
+          fontFamily: root.fontFamily
+          fontSize: root.iconSize
+          color: group.isTempCell
+            ? root.tempColor(group.cellData.tempC)
+            : root.warm(root.base, group.cellData.severity)
+          Behavior on color { ColorAnimation { duration: 240 } }
+        }
+
+        Text {
+          anchors.centerIn: parent
+          visible: group.cellData.iconRotation !== 0
+          rotation: group.cellData.iconRotation
+          textFormat: Text.PlainText
+          text: group.cellData.icon
+          color: group.isTempCell
+            ? root.tempColor(group.cellData.tempC)
+            : root.warm(root.base, group.cellData.severity)
+          font.family: root.fontFamily
+          font.pixelSize: root.iconSize
+          renderType: Text.NativeRendering
+          Behavior on color { ColorAnimation { duration: 240 } }
+        }
+      }
+
+      Gauge {
+        visible: root.showGauges && !root.labelled
+        height: root.contentHeight
+        bodyWidth: root.gaugeWidth
+        bodyHeight: root.gaugeHeight
+        ratio: group.cellData.ratio
+        fillColor: group.isTempCell ? root.tempColor(group.cellData.tempC) : root.warm(root.base, group.cellData.severity)
+        trackColor: Qt.rgba(root.base.r, root.base.g, root.base.b, 0.14)
+        borderColor: Qt.rgba(root.base.r, root.base.g, root.base.b, 0.4)
+        glow: group.cellData.severity >= 1
+      }
+
+      Text {
+        visible: root.labelled
+        height: root.contentHeight
+        text: group.cellData.label
+        color: root.dim
+        font.family: root.fontFamily
+        font.pixelSize: root.valueSize
+        font.bold: true
+        verticalAlignment: Text.AlignVCenter
+        renderType: Text.NativeRendering
+      }
+
+      Row {
+        id: valueRow
+        visible: root.showValues
+        height: root.contentHeight
+        spacing: 0
+
+        Text {
+          visible: group.cellData.pad !== ""
+          height: root.contentHeight
+          text: group.cellData.pad
+          color: root.warm(root.base, group.cellData.severity)
+          opacity: root.padOpacity
+          font.family: root.fontFamily
+          font.pixelSize: root.valueSize
+          verticalAlignment: Text.AlignVCenter
+          renderType: Text.NativeRendering
+        }
+
+        Text {
+          id: valueText
+          height: root.contentHeight
+          text: group.cellData.value
+          color: group.isTempCell
+            ? root.tempColor(group.cellData.tempC)
+            : root.warm(root.base, group.cellData.severity)
+          font.family: root.fontFamily
+          font.pixelSize: root.valueSize
+          font.bold: !group.isTempCell
+          verticalAlignment: Text.AlignVCenter
+          renderType: Text.NativeRendering
+          Behavior on color { ColorAnimation { duration: 240 } }
+        }
+      }
+
+      Row {
+        visible: root.showClocks && group.cellData.clock !== ""
+        height: root.contentHeight
+        spacing: Style.space(2)
+
+        Text {
+          visible: root.clockIcon !== ""
+          height: root.contentHeight
+          leftPadding: Style.space(2)
+          textFormat: Text.PlainText
+          text: root.clockIcon
+          color: root.warm(root.dim, group.cellData.severity)
+          font.family: root.fontFamily
+          font.pixelSize: root.valueSize
+          verticalAlignment: Text.AlignVCenter
+          renderType: Text.NativeRendering
+          Behavior on color { ColorAnimation { duration: 240 } }
+        }
+
+        Text {
+          height: root.contentHeight
+          textFormat: Text.PlainText
+          text: group.cellData.clock
+          color: root.warm(root.dim, group.cellData.severity)
+          font.family: root.fontFamily
+          font.pixelSize: root.valueSize
+          verticalAlignment: Text.AlignVCenter
+          renderType: Text.NativeRendering
+          Behavior on color { ColorAnimation { duration: 240 } }
+        }
+      }
+
+      Row {
+        visible: root.showTemps && group.cellData.temp !== ""
+        height: root.contentHeight
+        spacing: Style.space(3)
+
+        Text {
+          textFormat: Text.PlainText
+          height: root.contentHeight
+          text: "·"
+          color: Qt.darker(root.base, 1.8)
+          font.family: root.fontFamily
+          font.pixelSize: root.valueSize
+          verticalAlignment: Text.AlignVCenter
+          renderType: Text.NativeRendering
+        }
+
+        Text {
+          textFormat: Text.PlainText
+          height: root.contentHeight
+          width: Math.max(implicitWidth, root.tempSlot)
+          text: group.cellData.temp
+          color: root.tempColor(group.cellData.tempC)
+          font.family: root.fontFamily
+          font.pixelSize: root.valueSize
+          font.bold: false
+          verticalAlignment: Text.AlignVCenter
+          renderType: Text.NativeRendering
+          Behavior on color { ColorAnimation { duration: 240 } }
+        }
+      }
+
+      Item {
+        visible: group.slack > 0
+        width: visible ? group.slack : 0
+        height: 1
+      }
+    }
+  }
 }
