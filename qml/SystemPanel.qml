@@ -1038,88 +1038,16 @@ SidebarPopup {
                 }
               }
 
-              // Specs
-              Row {
-                width: parent.width
-                spacing: Style.space(16)
-
-                Column {
-                  width: (parent.width - parent.spacing) / 2
-                  spacing: Style.spacing.labelGap
-
-                  InfoPair {
-                    label: "Cores"
-                    value: hw.cpuInfo ? (hw.cpuInfo.cores + "C / " + hw.cpuInfo.threads + "T") : "–"
-                  }
-                  InfoPair {
-                    label: "Avg Clock"
-                    value: hw.cpuMhz > 0 ? Model.formatGhz(hw.cpuMhz) : "–"
-                  }
-                }
-
-                Column {
-                  width: (parent.width - parent.spacing) / 2
-                  spacing: Style.spacing.labelGap
-
-                  InfoPair {
-                    label: "Temperature"
-                    value: hw.cpuTempC > 0 ? Model.formatTemp(hw.cpuTempC, root.fahrenheit) : "–"
-                    valueColor: root.tempColor(hw.cpuTempC)
-                  }
-                  InfoPair {
-                    label: "Cur Load"
-                    value: hw.cpuPercent >= 0 ? Model.formatPercent(hw.cpuPercent) : "–"
-                    valueColor: root.warm(root.baseColor, Model.severity(hw.cpuPercent, root.warnPercent, root.criticalPercent))
-                  }
-                }
-              }
-
-              // Load average 1m, 5m, 15m: the period in each meter's title, no heading row
               Column {
                 width: parent.width
-                spacing: Style.space(6)
-
-                Row {
-                  width: parent.width
-                  spacing: Style.space(8)
-
-                  readonly property real maxCores: hw.cpuInfo && hw.cpuInfo.threads ? hw.cpuInfo.threads : 8
-
-                  LoadMeter {
-                    id: lm1
-                    width: (parent.width - parent.spacing * 2) / 3
-                    period: "Load 1m"
-                    meterAnimated: root.layoutAnimated
-                    value: hw.load ? hw.load.one : 0
-                    maxVal: parent.maxCores
-                    baseColor: root.baseColor
-                    hotColor: root.hotColor
-                    fontFamily: root.fontFamily
-                  }
-
-                  LoadMeter {
-                    id: lm5
-                    width: (parent.width - parent.spacing * 2) / 3
-                    period: "Load 5m"
-                    meterAnimated: root.layoutAnimated
-                    value: hw.load ? hw.load.five : 0
-                    maxVal: parent.maxCores
-                    baseColor: root.baseColor
-                    hotColor: root.hotColor
-                    fontFamily: root.fontFamily
-                  }
-
-                  LoadMeter {
-                    id: lm15
-                    width: (parent.width - parent.spacing * 2) / 3
-                    period: "Load 15m"
-                    meterAnimated: root.layoutAnimated
-                    value: hw.load ? hw.load.fifteen : 0
-                    maxVal: parent.maxCores
-                    baseColor: root.baseColor
-                    hotColor: root.hotColor
-                    fontFamily: root.fontFamily
-                  }
+                spacing: Style.spacing.labelGap
+                InfoPair {
+                  label: "Cores"
+                  value: hw.cpuInfo ? (hw.cpuInfo.cores + "C / " + hw.cpuInfo.threads + "T") : "–"
+                }
+                InfoPair {
+                  label: "Avg Clock"
+                  value: hw.cpuMhz > 0 ? Model.formatGhz(hw.cpuMhz) : "–"
                 }
               }
             }

@@ -7,7 +7,7 @@ The vertical sidebar stacks each icon above a horizontal load bar and its readin
 ## Features
 
 - CPU load, temperature, clock speed, and history.
-- One Processor card combines the 60-second history graph, core count, clock speed, temperature, and load averages.
+- One Processor card combines the 60-second history graph, core count and clock speed.
 - Popup overview cards for CPU usage, temperature, and used RAM, plus a five-process list by default.
 - Device model header with the CPU model beneath it.
 - RAM usage, swap, and supported memory compression statistics.
