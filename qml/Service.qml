@@ -94,7 +94,7 @@ Item {
   onProcPanelOpenChanged: if (procPanelOpen) sampleSystem()
   property bool procTopFailed: false
   property string procGroupedBy: "none"
-  readonly property int topProcCount: intSetting("topProcCount", 6, 3, 12)
+  readonly property int topProcCount: intSetting("topProcCount", 5, 3, 12)
   readonly property string topProcSort: {
     var want = String(setting("topProcSort", "ram")).trim().toLowerCase()
     return want === "cpu" ? "cpu" : "ram"

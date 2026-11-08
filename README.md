@@ -7,6 +7,7 @@ The vertical sidebar stacks each icon above a horizontal load bar and its readin
 ## Features
 
 - CPU load, temperature, clock speed, and history.
+- Popup overview cards for CPU usage, temperature, and used RAM, plus a five-process list by default.
 - RAM usage, swap, and supported memory compression statistics.
 - GPU metrics when supported by the hardware and driver.
 - Storage usage and top processes in the system panel.
@@ -46,7 +47,7 @@ omarchy restart shell
 - Middle click: refresh readings.
 - Hover: view hardware details.
 
-The panel's gear settings control item order, visibility, dials, and sections. Temperature appears when a supported sensor is available. Memory readings use binary units (GiB); the compact sidebar suffix is `G`.
+The panel's gear settings control item order, visibility, and sections. Temperature appears when a supported sensor is available. Memory readings use binary units (GiB); the compact sidebar suffix is `G`.
 
 ## Settings
 

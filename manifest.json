@@ -31,7 +31,7 @@
       "showGpuTemp": false,
       "showRam": true,
       "showTopProcs": true,
-      "topProcCount": 6,
+      "topProcCount": 5,
       "topProcSort": "ram",
       "topProcGroup": true,
       "showDisks": true,
@@ -152,7 +152,7 @@
         "min": 3,
         "max": 12,
         "step": 1,
-        "defaultValue": 6,
+        "defaultValue": 5,
         "description": "How many processes to list in the top-processes section (3-12, sorted by the active metric)."
       },
       {

@@ -65,7 +65,7 @@ SidebarPopup {
   readonly property var barLabels: ({ "gpu": "GPU", "cpu": "CPU", "cpu-temp": "CPU temp", "gpu-temp": "GPU temp", "ram": "RAM" })
   readonly property var dialLabels: ({ "cpu": "CPU", "ram": "RAM", "gpu": "GPU" })
   readonly property var sectionLabels: ({
-    "dials": "Dials", "history": "CPU history", "processor": "Processor", "memory": "Memory & Swap",
+    "dials": "Overview", "history": "CPU history", "processor": "Processor", "memory": "Memory & Swap",
     "storage": "Storage", "procs": "Top processes", "gpu": "Graphics"
   })
 
@@ -110,7 +110,7 @@ SidebarPopup {
   function sectionShown(key) {
     if (!sectionWanted(key)) return false
     if (key === "gpu") return hw.hasGpu
-    if (key === "dials") return visibleDials.length > 0
+    if (key === "dials") return true
     return true
   }
 
@@ -307,7 +307,7 @@ SidebarPopup {
   // Stand-ins for the process rows until the first list arrives.
   readonly property var procPlaceholders: {
     var rows = []
-    var n = hw.topProcCount > 0 ? hw.topProcCount : 6
+    var n = hw.topProcCount > 0 ? hw.topProcCount : 5
     for (var i = 0; i < n; i++) rows.push({ name: "", count: 1, pid: 0, cpu: 0, rssKib: 0, memPct: 0 })
     return rows
   }
@@ -759,40 +759,6 @@ SidebarPopup {
               Text {
                 width: Style.space(48)
                 topPadding: Style.space(4)
-                text: "Dials"
-                color: Qt.darker(root.baseColor, 1.4)
-                font.family: root.fontFamily
-                font.pixelSize: Style.font.caption
-                font.bold: true
-              }
-
-              Flow {
-                width: parent.width - Style.space(56)
-                spacing: Style.space(6)
-
-                Repeater {
-                  model: root.dialOrder
-                  delegate: OrderPill {
-                    required property string modelData
-                    required property int index
-                    label: root.dialLabels[modelData] || modelData
-                    shown: root.dialsHidden.indexOf(modelData) === -1
-                    first: index === 0
-                    last: index === root.dialOrder.length - 1
-                    onToggled: root.toggleDial(modelData)
-                    onMoved: function(delta) { root.moveDial(modelData, delta) }
-                  }
-                }
-              }
-            }
-
-            Row {
-              width: parent.width
-              spacing: Style.space(8)
-
-              Text {
-                width: Style.space(48)
-                topPadding: Style.space(4)
                 text: "Sections"
                 color: Qt.darker(root.baseColor, 1.4)
                 font.family: root.fontFamily
@@ -880,21 +846,41 @@ SidebarPopup {
             Behavior on y { enabled: root.layoutAnimated && !root.folding; NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
 
             Repeater {
-              model: root.visibleDials
-              delegate: Dial {
+              model: ["cpu", "temperature", "ram"]
+              delegate: Rectangle {
                 required property string modelData
-                readonly property var dialInfo: root.dialData(modelData)
-                width: (dialsSection.width - dialsSection.spacing * (root.visibleDials.length - 1)) / Math.max(1, root.visibleDials.length)
-                title: dialInfo.title
-                valueText: dialInfo.valueText
-                subText: dialInfo.subText
-                subTextColor: dialInfo.subTextColor
-                ratio: dialInfo.ratio
-                baseColor: root.baseColor
-                hotColor: root.hotColor
-                accentColor: Color.accent
-                severity: dialInfo.severity
-                fontFamily: root.fontFamily
+                width: (dialsSection.width - dialsSection.spacing * 2) / 3
+                implicitHeight: summaryColumn.implicitHeight + Style.space(24)
+                radius: Style.cornerRadius
+                color: Qt.rgba(root.baseColor.r, root.baseColor.g, root.baseColor.b, 0.04)
+
+                Column {
+                  id: summaryColumn
+                  anchors.centerIn: parent
+                  width: parent.width - Style.space(24)
+                  spacing: Style.space(6)
+                  Text {
+                    width: parent.width
+                    textFormat: Text.PlainText
+                    text: modelData === "cpu" ? "CPU usage" : modelData === "temperature" ? "Temperature" : "RAM used"
+                    color: root.dimColor
+                    font.family: root.fontFamily
+                    font.pixelSize: Style.font.caption
+                  }
+                  Text {
+                    width: parent.width
+                    textFormat: Text.PlainText
+                    text: modelData === "cpu" ? Model.formatPercent(root.hw.cpuPercent)
+                      : modelData === "temperature" ? (root.hw.cpuTempC > 0 ? Model.formatTemp(root.hw.cpuTempC, root.fahrenheit) : "—")
+                      : root.hw.memory ? Model.formatGibPrecise(Model.gibFromKib(root.hw.memory.usedKib)) + " GiB" : "—"
+                    color: root.baseColor
+                    font.family: root.fontFamily
+                    font.pixelSize: Style.font.body * 1.6
+                    font.bold: true
+                    fontSizeMode: Text.Fit
+                    minimumPixelSize: Style.font.bodySmall
+                  }
+                }
               }
             }
           }
