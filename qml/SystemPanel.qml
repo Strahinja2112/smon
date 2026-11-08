@@ -843,10 +843,10 @@ SidebarPopup {
             Behavior on y { enabled: root.layoutAnimated && !root.folding; NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
 
             Repeater {
-              model: ["cpu", "temperature", "ram"]
+              model: ["cpu", "temperature"]
               delegate: Rectangle {
                 required property string modelData
-                width: (dialsSection.width - dialsSection.spacing * 2) / 3
+                width: (dialsSection.width - dialsSection.spacing) / 2
                 implicitHeight: summaryColumn.implicitHeight + Style.space(24)
                 radius: Style.cornerRadius
                 color: Qt.rgba(root.baseColor.r, root.baseColor.g, root.baseColor.b, 0.04)
@@ -859,7 +859,7 @@ SidebarPopup {
                   Text {
                     width: parent.width
                     textFormat: Text.PlainText
-                    text: modelData === "cpu" ? "CPU usage" : modelData === "temperature" ? "Temperature" : "RAM used"
+                    text: modelData === "cpu" ? "CPU usage" : "Temperature"
                     color: root.dimColor
                     font.family: root.fontFamily
                     font.pixelSize: Style.font.caption
@@ -868,8 +868,7 @@ SidebarPopup {
                     width: parent.width
                     textFormat: Text.PlainText
                     text: modelData === "cpu" ? Model.formatPercent(root.hw.cpuPercent)
-                      : modelData === "temperature" ? (root.hw.cpuTempC > 0 ? Model.formatTemp(root.hw.cpuTempC, root.fahrenheit) : "—")
-                      : root.hw.memory ? Model.formatGibPrecise(Model.gibFromKib(root.hw.memory.usedKib)) + " GiB" : "—"
+                      : (root.hw.cpuTempC > 0 ? Model.formatTemp(root.hw.cpuTempC, root.fahrenheit) : "—")
                     color: root.baseColor
                     font.family: root.fontFamily
                     font.pixelSize: Style.font.body * 1.6

@@ -8,7 +8,7 @@ The vertical sidebar stacks each icon above a horizontal load bar and its readin
 
 - CPU load, temperature, clock speed, and history.
 - A Processor card shows the CPU history graph with percentage and time axis labels.
-- Popup overview cards for CPU usage, temperature, and used RAM, plus a five-process list by default.
+- Popup overview cards for CPU usage and temperature, plus a five-process list by default.
 - Device model header with the CPU model beneath it.
 - RAM usage, swap, and supported memory compression statistics.
 - Memory card with a large used/total reading, usage bar, available RAM, swap usage, and expandable cache/compression details.
