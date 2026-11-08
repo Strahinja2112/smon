@@ -960,7 +960,7 @@ SidebarPopup {
                   text: hw.cpuPercent >= 0 ? (Math.round(hw.cpuPercent) + "% current") : "–"
                   color: root.warm(root.baseColor, Model.severity(hw.cpuPercent, root.warnPercent, root.criticalPercent))
                   font.family: root.fontFamily
-                  font.pixelSize: Style.font.caption
+                  font.pixelSize: Style.font.title
                   font.bold: true
                 }
               }
