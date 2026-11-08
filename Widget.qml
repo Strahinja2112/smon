@@ -616,7 +616,7 @@ Panel {
     tooltipText: root.hint
     horizontalMargin: 6
     fixedWidth: root.vertical ? -1 : Math.ceil(horizontalCells.implicitWidth + button.scaledHorizontalMargin * 2)
-    fixedHeight: root.vertical ? Math.ceil(verticalCells.implicitHeight + Style.space(8)) : -1
+    fixedHeight: root.vertical ? Math.ceil(verticalCells.implicitHeight + Style.space(24)) : -1
 
     onPressed: function(pressedButton) {
       if (pressedButton === Qt.RightButton) root.cycleMode()
@@ -659,13 +659,26 @@ Panel {
             color: root.dim
             opacity: 0.55
           }
-          OpticalGlyph {
-            width: parent.width
-            height: root.glyphBox
-            text: verticalGroup.cellData.icon
-            fontFamily: root.fontFamily
-            fontSize: root.iconSize
-            color: root.base
+          Row {
+            anchors.horizontalCenter: parent.horizontalCenter
+            spacing: Style.space(4)
+            OpticalGlyph {
+              width: root.glyphBox
+              height: root.glyphBox
+              text: verticalGroup.cellData.icon
+              fontFamily: root.fontFamily
+              fontSize: root.iconSize
+              color: root.warm(root.base, verticalGroup.cellData.severity)
+            }
+            Gauge {
+              visible: root.showGauges
+              height: root.glyphBox
+              bodyWidth: root.gaugeWidth
+              bodyHeight: root.gaugeHeight
+              ratio: verticalGroup.cellData.ratio
+              fillColor: root.warm(root.base, verticalGroup.cellData.severity)
+              glow: verticalGroup.cellData.severity >= 1
+            }
           }
           Text {
             width: parent.width
@@ -678,7 +691,7 @@ Panel {
             horizontalAlignment: Text.AlignHCenter
             color: root.base
             font.family: root.fontFamily
-            font.pixelSize: root.valueSize
+            font.pixelSize: root.valueSize * 0.8
           }
         }
       }
