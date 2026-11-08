@@ -23,11 +23,13 @@ An Omarchy installation with Quickshell shell plugin support. Hardware readings 
 omarchy plugin add https://github.com/Strahinja2112/smon.git --enable
 ```
 
-For a vertical sidebar, place Smon immediately after the workspace widget:
+For a vertical sidebar, place Smon in the bottom section, immediately after the background-apps tray:
 
 ```bash
-omarchy bar move archy.smon --section left --index 1
+omarchy bar move archy.smon --section right --after denon.tray
 ```
+
+Replace `denon.tray` with your tray widget's ID if you use a different bar.
 
 If the plugin does not appear, restart the shell:
 
