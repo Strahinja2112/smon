@@ -51,7 +51,7 @@ omarchy restart shell
 - Middle click: refresh readings.
 - Hover: view hardware details.
 
-The panel's gear settings control item order, visibility, and sections. Temperature appears when a supported sensor is available. Memory readings use binary units (GiB); the compact sidebar suffix is `G`.
+Temperature appears when a supported sensor is available. Memory readings use binary units (GiB); the compact sidebar suffix is `G`.
 
 ## Settings
 

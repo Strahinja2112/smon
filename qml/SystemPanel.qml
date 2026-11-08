@@ -40,7 +40,6 @@ SidebarPopup {
   property bool showGauges: false
   property string ramFormat: "used/total"
   property string tempFormat: "degree-unit"
-  property bool settingsOpen: false
 
   signal fahrenheitToggled()
 
@@ -56,49 +55,6 @@ SidebarPopup {
     }
   }
 
-  // ------------------------------------------------------------ ordering
-  //
-  // Bar items, dials and panel sections are each reordered and shown/hidden
-  // from the settings drawer. Model.normalizeOrder has already filled in any
-  // key the stored list leaves out.
-
-  readonly property var barLabels: ({ "gpu": "GPU", "cpu": "CPU", "cpu-temp": "CPU temp", "gpu-temp": "GPU temp", "ram": "RAM" })
-  readonly property var dialLabels: ({ "cpu": "CPU", "ram": "RAM", "gpu": "GPU" })
-  readonly property var sectionLabels: ({
-    "processor": "Processor", "memory": "Memory & Swap",
-    "storage": "Storage", "network": "Network", "procs": "Top processes", "gpu": "Graphics"
-  })
-
-  // Bar items keep their original per-item switches as the visibility store.
-  readonly property var barShowKeys: ({ "gpu": "showGpu", "cpu": "showCpu", "cpu-temp": "showCpuTemp", "gpu-temp": "showGpuTemp", "ram": "showRam" })
-
-  function barItemShown(key) {
-    if (key === "gpu") return showGpu
-    if (key === "cpu") return showCpu
-    if (key === "cpu-temp") return showCpuTemp
-    if (key === "gpu-temp") return showGpuTemp
-    if (key === "ram") return showRam
-    return false
-  }
-
-  function toggleBarItem(key) {
-    if (barShowKeys[key]) persistSetting(barShowKeys[key], !barItemShown(key))
-  }
-
-  function moveBarItem(key, delta) {
-    persistSetting("itemsOrder", Model.moveKey(barOrder, key, delta))
-  }
-
-  readonly property var visibleDials: dialOrder.filter(function(k) { return dialsHidden.indexOf(k) === -1 })
-
-  function toggleDial(key) {
-    persistSetting("panelDialsHidden", Model.setHidden(dialsHidden, key, dialsHidden.indexOf(key) === -1))
-  }
-
-  function moveDial(key, delta) {
-    persistSetting("panelDials", Model.moveKey(dialOrder, key, delta))
-  }
-
   // What the user asked for, before what this machine can show.
   function sectionWanted(key) {
     if (sectionsHidden.indexOf(key) !== -1) return false
@@ -111,15 +67,6 @@ SidebarPopup {
     if (!sectionWanted(key)) return false
     if (key === "gpu") return hw.hasGpu
     return true
-  }
-
-  function toggleSection(key) {
-    var wanted = sectionWanted(key)
-    var changes = { panelSectionsHidden: Model.setHidden(sectionsHidden, key, wanted) }
-    // The older per-section switches would otherwise keep it hidden.
-    if (!wanted && key === "procs" && !showTopProcs) changes.showTopProcs = true
-    if (!wanted && key === "storage" && !showDisks) changes.showDisks = true
-    persistSettings(changes)
   }
 
   // A click on a card's header folds it down to the header; remembered in
@@ -290,7 +237,6 @@ SidebarPopup {
       root.cpuHistory = [initial, initial]
     } else {
       root.cpuHistory = []
-      root.settingsOpen = false
       hw.procPanelOpen = false
     }
   }
@@ -361,25 +307,23 @@ SidebarPopup {
         root.refreshWorkers(true)
       } else if (t === "c" || t === "C" || t === "f" || t === "F") {
         root.toggleFahrenheit()
-      } else if (t === "s" || t === "S") {
-        root.settingsOpen = !root.settingsOpen
+
       }
     }
 
-    // 1. Header with Processor Name and Settings Gear
+    // Device header
     Item {
       id: stickyHeader
       anchors.top: parent.top
       anchors.left: parent.left
       anchors.right: parent.right
       height: implicitHeight
-      implicitHeight: Math.max(headerLeft.implicitHeight, settingsButton.implicitHeight)
+      implicitHeight: headerLeft.implicitHeight
 
       Row {
         id: headerLeft
         anchors.left: parent.left
-        anchors.right: settingsButton.left
-        anchors.rightMargin: Style.space(10)
+        anchors.right: parent.right
         anchors.verticalCenter: parent.verticalCenter
         spacing: Style.space(10)
 
@@ -421,15 +365,7 @@ SidebarPopup {
         }
       }
 
-      // Gear Icon for In-Panel Settings
-      ModeChip {
-        id: settingsButton
-        label: "\uF013"
-        selected: root.settingsOpen
-        anchors.right: parent.right
-        anchors.verticalCenter: parent.verticalCenter
-        onPicked: root.settingsOpen = !root.settingsOpen
-      }
+
     }
 
     Column {
@@ -510,347 +446,7 @@ SidebarPopup {
         width: scrollArea.availableWidth
         spacing: Style.space(12)
 
-        // Animated Settings Drawer
-        Rectangle {
-          width: parent.width
-          visible: root.settingsOpen || height > 0
-          height: root.settingsOpen ? settingsCol.implicitHeight + Style.space(20) : 0
-          clip: true
-          color: Qt.rgba(root.baseColor.r, root.baseColor.g, root.baseColor.b, 0.05)
-          border.color: Qt.rgba(root.baseColor.r, root.baseColor.g, root.baseColor.b, 0.14)
-          border.width: 1
-          radius: Style.cornerRadius
-
-          Behavior on height {
-            NumberAnimation { duration: 220; easing.type: Easing.OutCubic }
-          }
-          opacity: root.settingsOpen ? 1 : 0
-          Behavior on opacity {
-            NumberAnimation { duration: 180; easing.type: Easing.OutCubic }
-          }
-
-          Column {
-            id: settingsCol
-            anchors.top: parent.top
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.margins: Style.space(10)
-            spacing: Style.space(10)
-
-            // Settings Header
-            Row {
-              width: parent.width
-              spacing: Style.space(6)
-
-              Text {
-                textFormat: Text.PlainText
-                text: ""
-                color: Color.accent
-                font.family: root.fontFamily
-                font.pixelSize: Style.font.caption
-                anchors.verticalCenter: parent.verticalCenter
-              }
-
-              Text {
-                textFormat: Text.PlainText
-                text: "Top Bar Display Settings"
-                color: root.baseColor
-                font.family: root.fontFamily
-                font.pixelSize: Style.font.caption
-                font.bold: true
-                anchors.verticalCenter: parent.verticalCenter
-              }
-            }
-
-            // Readout Mode
-            Row {
-              width: parent.width
-              spacing: Style.space(8)
-
-              Text {
-                width: Style.space(48)
-                anchors.verticalCenter: parent.verticalCenter
-                text: "Mode"
-                color: Qt.darker(root.baseColor, 1.4)
-                font.family: root.fontFamily
-                font.pixelSize: Style.font.caption
-                font.bold: true
-              }
-
-              Flow {
-                width: parent.width - Style.space(56)
-                spacing: Style.space(4)
-
-                ModeChip {
-                  label: "Icons"
-                  selected: root.mode === "icons"
-                  onPicked: root.persistSetting("mode", "icons")
-                }
-                ModeChip {
-                  label: "Compact"
-                  selected: root.mode === "compact"
-                  onPicked: root.persistSetting("mode", "compact")
-                }
-                ModeChip {
-                  label: "Full"
-                  selected: root.mode === "full"
-                  onPicked: root.persistSetting("mode", "full")
-                }
-                ModeChip {
-                  label: "Labels"
-                  selected: root.mode === "labels"
-                  onPicked: root.persistSetting("mode", "labels")
-                }
-              }
-            }
-
-            // Bar items: ‹ › moves one, the name shows or hides it
-            Row {
-              width: parent.width
-              spacing: Style.space(8)
-
-              Text {
-                width: Style.space(48)
-                topPadding: Style.space(4)
-                text: "Items"
-                color: Qt.darker(root.baseColor, 1.4)
-                font.family: root.fontFamily
-                font.pixelSize: Style.font.caption
-                font.bold: true
-              }
-
-              Flow {
-                width: parent.width - Style.space(56)
-                spacing: Style.space(6)
-
-                Repeater {
-                  model: root.barOrder
-                  delegate: OrderPill {
-                    required property string modelData
-                    required property int index
-                    label: root.barLabels[modelData] || modelData
-                    shown: root.barItemShown(modelData)
-                    first: index === 0
-                    last: index === root.barOrder.length - 1
-                    onToggled: root.toggleBarItem(modelData)
-                    onMoved: function(delta) { root.moveBarItem(modelData, delta) }
-                  }
-                }
-              }
-            }
-
-            // Show Components
-            Row {
-              width: parent.width
-              spacing: Style.space(8)
-
-              Text {
-                width: Style.space(48)
-                anchors.verticalCenter: parent.verticalCenter
-                text: "Show"
-                color: Qt.darker(root.baseColor, 1.4)
-                font.family: root.fontFamily
-                font.pixelSize: Style.font.caption
-                font.bold: true
-              }
-
-              Flow {
-                width: parent.width - Style.space(56)
-                spacing: Style.space(4)
-
-                ModeChip {
-                  label: "󰓅 Clocks"
-                  selected: root.showClocks
-                  onPicked: root.persistSetting("showClocks", !root.showClocks)
-                }
-                ModeChip {
-                  label: "󰁹 Gauges"
-                  selected: root.showGauges
-                  onPicked: root.persistSetting("showGauges", !root.showGauges)
-                }
-              }
-            }
-
-            // RAM Format
-            Row {
-              width: parent.width
-              spacing: Style.space(8)
-
-              Text {
-                width: Style.space(48)
-                anchors.verticalCenter: parent.verticalCenter
-                text: "RAM"
-                color: Qt.darker(root.baseColor, 1.4)
-                font.family: root.fontFamily
-                font.pixelSize: Style.font.caption
-                font.bold: true
-              }
-
-              Flow {
-                width: parent.width - Style.space(56)
-                spacing: Style.space(4)
-
-                ModeChip {
-                  label: "Used/Total"
-                  selected: root.ramFormat === "used/total"
-                  onPicked: root.persistSetting("ramFormat", "used/total")
-                }
-                ModeChip {
-                  label: "Used"
-                  selected: root.ramFormat === "used"
-                  onPicked: root.persistSetting("ramFormat", "used")
-                }
-                ModeChip {
-                  label: "Percent"
-                  selected: root.ramFormat === "percent"
-                  onPicked: root.persistSetting("ramFormat", "percent")
-                }
-                ModeChip {
-                  label: "Free"
-                  selected: root.ramFormat === "free"
-                  onPicked: root.persistSetting("ramFormat", "free")
-                }
-              }
-            }
-
-            // Temperature Unit
-            Row {
-              width: parent.width
-              spacing: Style.space(8)
-
-              Text {
-                width: Style.space(48)
-                anchors.verticalCenter: parent.verticalCenter
-                text: "Unit"
-                color: Qt.darker(root.baseColor, 1.4)
-                font.family: root.fontFamily
-                font.pixelSize: Style.font.caption
-                font.bold: true
-              }
-
-              Flow {
-                width: parent.width - Style.space(56)
-                spacing: Style.space(4)
-
-                ModeChip {
-                  label: "°C  Celsius"
-                  selected: !root.fahrenheit
-                  onPicked: root.persistSetting("fahrenheit", false)
-                }
-                ModeChip {
-                  label: "°F  Fahrenheit"
-                  selected: root.fahrenheit
-                  onPicked: root.persistSetting("fahrenheit", true)
-                }
-              }
-            }
-
-            // Temp Format
-            Row {
-              width: parent.width
-              spacing: Style.space(8)
-
-              Text {
-                width: Style.space(48)
-                anchors.verticalCenter: parent.verticalCenter
-                text: "Temp"
-                color: Qt.darker(root.baseColor, 1.4)
-                font.family: root.fontFamily
-                font.pixelSize: Style.font.caption
-                font.bold: true
-              }
-
-              Flow {
-                width: parent.width - Style.space(56)
-                spacing: Style.space(4)
-
-                ModeChip {
-                  label: root.fahrenheit ? "45°F" : "45°C"
-                  selected: root.tempFormat === "degree-unit"
-                  onPicked: root.persistSetting("tempFormat", "degree-unit")
-                }
-                ModeChip {
-                  label: "45°"
-                  selected: root.tempFormat === "degree"
-                  onPicked: root.persistSetting("tempFormat", "degree")
-                }
-                ModeChip {
-                  label: root.fahrenheit ? "45F" : "45C"
-                  selected: root.tempFormat === "unit"
-                  onPicked: root.persistSetting("tempFormat", "unit")
-                }
-                ModeChip {
-                  label: "45"
-                  selected: root.tempFormat === "bare"
-                  onPicked: root.persistSetting("tempFormat", "bare")
-                }
-              }
-            }
-
-            // Panel layout
-            Row {
-              width: parent.width
-              spacing: Style.space(6)
-
-              Text {
-                textFormat: Text.PlainText
-                text: ""
-                color: Color.accent
-                font.family: root.fontFamily
-                font.pixelSize: Style.font.caption
-                anchors.verticalCenter: parent.verticalCenter
-              }
-
-              Text {
-                textFormat: Text.PlainText
-                text: "Panel Layout"
-                color: root.baseColor
-                font.family: root.fontFamily
-                font.pixelSize: Style.font.caption
-                font.bold: true
-                anchors.verticalCenter: parent.verticalCenter
-              }
-            }
-
-            Row {
-              width: parent.width
-              spacing: Style.space(8)
-
-              Text {
-                width: Style.space(48)
-                topPadding: Style.space(4)
-                text: "Sections"
-                color: Qt.darker(root.baseColor, 1.4)
-                font.family: root.fontFamily
-                font.pixelSize: Style.font.caption
-                font.bold: true
-              }
-
-              Column {
-                width: parent.width - Style.space(56)
-                spacing: Style.space(4)
-
-                Repeater {
-                  model: root.sectionOrder
-                  delegate: OrderRow {
-                    required property string modelData
-                    required property int index
-                    width: parent.width
-                    label: root.sectionLabels[modelData] || modelData
-                    shown: root.sectionWanted(modelData)
-                    note: modelData === "gpu" && !hw.hasGpu ? "no GPU found" : ""
-                    first: index === 0
-                    last: index === root.sectionOrder.length - 1
-                    onToggled: root.toggleSection(modelData)
-                    onMoved: function(delta) { root.moveSection(modelData, delta) }
-                  }
-                }
-              }
-            }
-          }
-        }
-
-        // Sections 2–6, stacked in the order chosen in the settings drawer.
+        // Sections follow the configured order.
         // Each section takes its y from offsetOf(), so reordering is a
         // settings change rather than a re-parent, and hidden ones take no space.
         Item {
@@ -1866,93 +1462,6 @@ SidebarPopup {
           height: Style.space(12)
         }
       }
-    }
-  }
-
-  // One entry of an orderable row: ‹ name ›. The name shows or hides it.
-  component OrderPill: Row {
-    id: pill
-    property string label: ""
-    property bool shown: true
-    property bool first: false
-    property bool last: false
-    signal toggled()
-    signal moved(int delta)
-
-    spacing: Style.space(2)
-
-    ModeChip {
-      label: "‹"
-      enabled: !pill.first
-      opacity: enabled ? 1 : 0.35
-      onPicked: pill.moved(-1)
-    }
-    ModeChip {
-      label: pill.label
-      selected: pill.shown
-      onPicked: pill.toggled()
-    }
-    ModeChip {
-      label: "›"
-      enabled: !pill.last
-      opacity: enabled ? 1 : 0.35
-      onPicked: pill.moved(1)
-    }
-  }
-
-  // One row of the vertical section list: name (shows or hides it), ↑ ↓.
-  component OrderRow: Item {
-    id: orderRow
-    property string label: ""
-    property string note: ""
-    property bool shown: true
-    property bool first: false
-    property bool last: false
-    signal toggled()
-    signal moved(int delta)
-
-    implicitHeight: Math.max(orderName.implicitHeight, orderUp.implicitHeight)
-
-    ModeChip {
-      id: orderName
-      anchors.left: parent.left
-      anchors.verticalCenter: parent.verticalCenter
-      label: orderRow.label
-      selected: orderRow.shown
-      onPicked: orderRow.toggled()
-    }
-
-    Text {
-      anchors.left: orderName.right
-      anchors.leftMargin: Style.space(6)
-      anchors.verticalCenter: parent.verticalCenter
-      visible: orderRow.note !== ""
-      textFormat: Text.PlainText
-      text: orderRow.note
-      color: Qt.darker(root.baseColor, 1.4)
-      font.family: root.fontFamily
-      font.pixelSize: Style.font.caption
-    }
-
-    ModeChip {
-      id: orderDown
-      anchors.right: parent.right
-      anchors.verticalCenter: parent.verticalCenter
-      label: "↓"
-      enabled: !orderRow.last
-      opacity: enabled ? 1 : 0.35
-      onPicked: orderRow.moved(1)
-    }
-
-    ModeChip {
-      id: orderUp
-      anchors.right: orderDown.left
-      anchors.rightMargin: Style.space(4)
-      anchors.verticalCenter: parent.verticalCenter
-      label: "↑"
-      enabled: !orderRow.first
-      opacity: enabled ? 1 : 0.35
-      onPicked: orderRow.moved(-1)
     }
   }
 
