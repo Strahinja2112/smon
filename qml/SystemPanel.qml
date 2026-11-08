@@ -1437,14 +1437,10 @@ SidebarPopup {
                   anchors.verticalCenter: parent.verticalCenter
                 }
 
-              }
-
-              Flow {
-                width: parent.width
-                spacing: Style.space(6)
                 ModeChip {
                   id: sortCpuChip
                   label: "Sort by CPU"
+                  anchors.verticalCenter: parent.verticalCenter
                   selected: hw.topProcSort === "cpu"
                   onPicked: root.persistSetting("topProcSort", "cpu")
                 }
@@ -1452,24 +1448,11 @@ SidebarPopup {
                 ModeChip {
                   id: sortRamChip
                   label: "Sort by RAM"
+                  anchors.verticalCenter: parent.verticalCenter
                   selected: hw.topProcSort === "ram"
                   onPicked: root.persistSetting("topProcSort", "ram")
                 }
 
-                ModeChip {
-                  id: groupChip
-                  label: "Group by app"
-                  selected: hw.topProcGroup
-                  onPicked: root.persistSetting("topProcGroup", !hw.topProcGroup)
-                }
-                ModeChip {
-                  label: hw.topProcCount > 5 ? "Show fewer" : "Show 10"
-                  selected: hw.topProcCount > 5
-                  onPicked: {
-                    root.persistSetting("topProcCount", hw.topProcCount > 5 ? 5 : 10)
-                    Qt.callLater(function() { root.refreshWorkers(true) })
-                  }
-                }
               }
 
               Row {

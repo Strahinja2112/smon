@@ -13,7 +13,7 @@ The vertical sidebar stacks each icon above a horizontal load bar and its readin
 - Memory card with a large used/total reading, usage bar, available RAM, swap usage, and visible cache details.
 - GPU metrics when supported by the hardware and driver.
 - Storage usage and top processes in the system panel.
-- Processes use aligned App, CPU, and RAM columns, app grouping, clear sort controls, and a five/ten-row toggle.
+- Processes use aligned App, CPU, and RAM columns, always group by app, and provide sort controls beside the section title.
 - Theme colors, configurable item order, and panel sections.
 - Horizontal bar support with icons, compact, full, and label modes.
 

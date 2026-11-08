@@ -16,7 +16,7 @@
   },
   "barWidget": {
     "displayName": "Smon",
-    "description": "GPU, CPU, temperature, and RAM load as sleek icon readouts, vertical gauges, or spelled out words. Left click opens the system telemetry panel with top processes by RAM and free space per mounted disk, removable drive and network share, and — with the Group toggle off — per-tab hints for Chromium-family browsers (it reads their process memory where the kernel allows it, and caches those labels plus the last CPU snapshot in a 0600 file in your runtime dir, which on a default setup is tmpfs and is cleared at logout).",
+    "description": "Grouped apps with CPU and RAM readings, hardware telemetry, and mounted storage in the system panel.",
     "category": "System",
     "allowMultiple": true,
     "defaultSection": "right",
@@ -33,7 +33,6 @@
       "showTopProcs": true,
       "topProcCount": 5,
       "topProcSort": "ram",
-      "topProcGroup": true,
       "showDisks": true,
       "diskHideMounts": [
         "/boot",
@@ -163,13 +162,6 @@
         ],
         "defaultValue": "ram",
         "description": "Sort top processes by CPU load or RAM."
-      },
-      {
-        "key": "topProcGroup",
-        "type": "boolean",
-        "label": "Group by application",
-        "defaultValue": true,
-        "description": "Collapse processes by application (systemd scope, comm-name fallback) with summed RAM/CPU and process counts. Turn it off to see the per-tab role and domain hints instead."
       },
       {
         "key": "showDisks",

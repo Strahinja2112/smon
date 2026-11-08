@@ -100,11 +100,6 @@ Item {
     var want = String(setting("topProcSort", "ram")).trim().toLowerCase()
     return want === "cpu" ? "cpu" : "ram"
   }
-  readonly property bool topProcGroup: {
-    var value = setting("topProcGroup", true)
-    if (typeof value === "boolean") return value
-    return String(value).trim().toLowerCase() !== "false"
-  }
   readonly property string procTopPath: scriptsDir + "/proc_top.py"
   // nvidia-smi formats its CSV numbers with the session locale, so a
   // comma-decimal locale (de_DE, fr_FR, it_IT) turns "55.30" into "55,30" —
@@ -359,7 +354,7 @@ Item {
     if (_lastProcTopTry > 0 && now - _lastProcTopTry < 3000) return
     _lastProcTopTry = now
     var cmd = ["/usr/bin/python3", procTopPath, "--top", String(topProcCount), "--sort", topProcSort]
-    if (topProcGroup) cmd.push("--group")
+    cmd.push("--group")
     procTopProcess.command = cmd
     _procTopBase = String(procTopOut.text).length
     _procTopErrBase = String(procTopErr.text).length
@@ -397,11 +392,6 @@ Item {
   // Il veto è ripetuto qui perché questi due handler scrivono _lastProcTopTry
   // prima di chiamare: senza, muterebbero stato su un oggetto già distrutto.
   onTopProcSortChanged: {
-    if (_destroyed) return
-    _lastProcTopTry = 0
-    refreshProcTop()
-  }
-  onTopProcGroupChanged: {
     if (_destroyed) return
     _lastProcTopTry = 0
     refreshProcTop()
