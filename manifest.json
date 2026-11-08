@@ -3,7 +3,7 @@
   "schemaVersion": 1,
   "id": "archy.smon",
   "name": "Smon",
-  "version": "1.3.2+storage.3",
+  "version": "2.0.0",
   "author": "Strahinja2112 (based on zoltanf, meviusisback, and Edgar Silva)",
   "license": "MIT",
   "description": "Omarchy system monitor with stacked sidebar readings, CPU temperature, RAM usage, gauges, and a detailed system panel.",

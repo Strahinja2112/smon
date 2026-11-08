@@ -1,0 +1,23 @@
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const vm = require('node:vm');
+const path = require('node:path');
+const model = vm.createContext({});
+vm.runInContext(fs.readFileSync(path.join(__dirname, '../qml/Model.js'), 'utf8').replace(/^\.pragma.*$/mg, ''), model);
+
+const counters = model.parseNetwork('lo: 1 0 0 0 0 0 0 0 2 0 0 0 0 0 0 0\nwlan0: 100 0 0 0 0 0 0 0 200 0 0 0 0 0 0 0\nbad: nope');
+assert.equal(counters.wlan0.rx, 100);
+assert.equal(counters.wlan0.tx, 200);
+assert.equal(counters.lo, undefined);
+assert.equal(counters.bad, undefined);
+assert.equal(model.networkRate({rx: 100, tx: 200}, {rx: 300, tx: 600}, 2).rx, 100);
+assert.equal(model.networkRate({rx: 100, tx: 200}, {rx: 0, tx: 0}, 2).tx, 0);
+assert.equal(model.networkRate(null, counters.wlan0, 0).rx, 0);
+const order = model.normalizeOrder(['dials', 'history', 'processor'], model.PANEL_SECTIONS);
+assert.equal(order.includes('history'), false);
+assert.equal(order.includes('dials'), false);
+assert.equal(order.includes('network'), true);
+assert.equal(order.filter(key => key === 'processor').length, 1);
+assert.equal(model.parseProbe('{"device":{"model":"ThinkPad"}}').device.model, 'ThinkPad');
+assert.equal(model.parseProbe('{"device":{"model":null}}').device.model, '');
+console.log('Model checks passed');

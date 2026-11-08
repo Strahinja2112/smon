@@ -2,6 +2,8 @@
 
 A system monitor plugin for the Omarchy bar and sidebar. Plugin ID: `archy.smon`.
 
+![Smon sidebar and system popup](preview.png)
+
 The vertical sidebar stacks each icon above a horizontal load bar and its reading: CPU temperature or used RAM. Smaller readings, extra vertical padding, and a divider before RAM keep the groups distinct. Clicking the widget opens a detailed system panel.
 
 ## Features
@@ -21,7 +23,7 @@ The vertical sidebar stacks each icon above a horizontal load bar and its readin
 
 ## Requirements
 
-The attached popup uses the sibling `denon.bar` plugin's panel components. Install Denon's bar alongside Smon to use its sidebar blending effect.
+Tested with Omarchy 4.5. The popup works with stock Omarchy. When the sibling `denon.bar` plugin is installed, Smon automatically uses its attached drawer styling; otherwise it uses Omarchy's standard popup.
 
 An Omarchy installation with Quickshell shell plugin support. Hardware readings use Linux `/proc` and `/sys`; available metrics depend on your sensors and drivers. NVIDIA metrics require `nvidia-smi`. Process and session stats require Python 3. Storage discovery uses `findmnt` and `lsblk`. Copy summary requires `wl-copy`.
 
@@ -31,13 +33,13 @@ An Omarchy installation with Quickshell shell plugin support. Hardware readings 
 omarchy plugin add https://github.com/Strahinja2112/smon.git --enable
 ```
 
-For a vertical sidebar, place Smon in the bottom section, immediately after the background-apps tray:
+For a vertical sidebar, place Smon in the bottom section:
 
 ```bash
-omarchy bar move archy.smon --section right --after denon.tray
+omarchy bar move archy.smon --section right --index 0
 ```
 
-Replace `denon.tray` with your tray widget's ID if you use a different bar.
+On Denon's bar, use `--after denon.tray` instead of `--index 0` to put it after the background-apps arrow.
 
 If the plugin does not appear, restart the shell:
 
@@ -73,13 +75,21 @@ The full settings schema is in [manifest.json](manifest.json). Display modes mai
 omarchy plugin update archy.smon
 ```
 
+## Remove
+
+```bash
+omarchy plugin remove archy.smon
+```
+
+This removes the installed plugin through Omarchy's plugin manager. No system packages or third-party configuration files are installed or overwritten by Smon.
+
 ## Project structure
 
 ```text
 manifest.json       Plugin identity, entry point, and settings
 qml/                Widget, popup, service, and shared model
 scripts/            Hardware, storage, and process helpers
-assets/previews/    Upstream screenshots
+preview.png         Current sidebar and popup screenshot
 ```
 
 ## Local development
@@ -88,7 +98,10 @@ assets/previews/    Upstream screenshots
 git clone https://github.com/Strahinja2112/smon.git
 cd smon
 omarchy plugin validate .
+node tests/model.test.cjs
 ```
+
+Node.js is needed only for the model regression checks, not to run the plugin.
 
 To install local changes, copy the runtime files into the plugin directory:
 
@@ -101,7 +114,7 @@ omarchy restart shell
 
 ## Process information
 
-The top-processes panel can show Chromium tab domain hints. Where Linux permits it, the inherited helper reads browser process memory to infer these hints. Hints may be inaccurate. Process labels and CPU snapshots are cached in a private file in the runtime directory. Hide the Top processes section to stop its worker.
+The panel always groups processes by app. The inherited process helper also contains an ungrouped browser-domain hint mode, which can read browser process memory where Linux permits it; Smon does not enable that mode. Process labels and CPU snapshots are cached in a private file in the runtime directory. Process sampling stops when the panel closes or its section folds. Session stats use `/proc` and `hyprctl`; network rates use `/proc` without external requests. Clicking Copy summary writes the displayed system readings to your clipboard.
 
 Plugins run with your user permissions inside the Omarchy shell. Review code before installing. The optional `clickCommand` setting executes a shell command when clicked.
 
@@ -109,6 +122,6 @@ Plugins run with your user permissions inside the Omarchy shell. Review code bef
 
 Smon adapts [zoltanf/omarchy-hw-monitor](https://github.com/zoltanf/omarchy-hw-monitor), which builds on [meviusisback/omarchy-hw-monitor](https://github.com/meviusisback/omarchy-hw-monitor) and [Edgar Silva's original project](https://github.com/edgarsilva/omarchy-hw-monitor).
 
-The sidebar layout and plugin identity are customized here. Existing files under `assets/previews/` show upstream designs, not the current Smon sidebar.
+The sidebar layout, popup, and plugin identity are customized here. The preview shows Smon running with Denon's optional attached drawer styling.
 
 [MIT license](LICENSE). Original copyright notices are retained.
