@@ -11,7 +11,7 @@ The vertical sidebar stacks each icon above a horizontal load bar and its readin
 - Popup overview cards for CPU usage and temperature, plus a five-process list by default.
 - Device model header with the CPU model beneath it.
 - RAM usage, swap, and supported memory compression statistics.
-- Memory card with a large used/total reading, usage bar, available RAM, swap usage, and expandable cache/compression details.
+- Memory card with a large used/total reading, usage bar, available RAM, swap usage, and visible cache/compression details.
 - GPU metrics when supported by the hardware and driver.
 - Storage usage and top processes in the system panel.
 - Theme colors, configurable item order, and panel sections.

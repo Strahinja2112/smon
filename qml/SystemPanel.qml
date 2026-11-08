@@ -40,7 +40,6 @@ SidebarPopup {
   property bool showGauges: false
   property string ramFormat: "used/total"
   property string tempFormat: "degree-unit"
-  property bool memoryDetailsOpen: false
   property bool settingsOpen: false
 
   signal fahrenheitToggled()
@@ -1196,15 +1195,6 @@ SidebarPopup {
                   value: hw.memory ? Model.formatGibPrecise(Model.gibFromKib(hw.memory.swapUsedKib)) + " GiB" : "–"
                 }
               }
-              ModeChip {
-                label: root.memoryDetailsOpen ? "Hide memory details" : "Memory details"
-                selected: root.memoryDetailsOpen
-                onPicked: root.memoryDetailsOpen = !root.memoryDetailsOpen
-              }
-              Column {
-                visible: root.memoryDetailsOpen
-                width: parent.width
-                spacing: Style.space(10)
               // Details
               Row {
                 width: parent.width
@@ -1216,7 +1206,7 @@ SidebarPopup {
 
                   InfoPair {
                     label: "Page Cache"
-                    value: hw.memory ? (Model.formatGib(Model.gibFromKib(hw.memory.cachedKib)) + " GiB") : "–"
+                    value: hw.memory ? (Model.formatGibPrecise(Model.gibFromKib(hw.memory.cachedKib)) + " GiB") : "–"
                   }
                 }
 
@@ -1226,7 +1216,7 @@ SidebarPopup {
 
                   InfoPair {
                     label: "Swap Total"
-                    value: hw.memory && hw.memory.swapTotalKib > 0 ? (Model.formatGib(Model.gibFromKib(hw.memory.swapTotalKib)) + " GiB") : "None"
+                    value: hw.memory && hw.memory.swapTotalKib > 0 ? (Model.formatGibPrecise(Model.gibFromKib(hw.memory.swapTotalKib)) + " GiB") : "None"
                   }
                 }
               }
@@ -1234,7 +1224,7 @@ SidebarPopup {
               // RAM compression: zram swap devices, sampled while the panel is open
               Column {
                 width: parent.width
-                spacing: Style.space(4)
+                spacing: Style.space(8)
                 id: zramBlock
                 visible: hw.zram !== null
 
@@ -1249,7 +1239,7 @@ SidebarPopup {
                     text: "RAM Compression"
                     color: Qt.darker(root.baseColor, 1.4)
                     font.family: root.fontFamily
-                    font.pixelSize: Style.font.caption
+                    font.pixelSize: Style.font.bodySmall
                     font.bold: true
                   }
 
@@ -1264,14 +1254,14 @@ SidebarPopup {
                       + " \u00b7 " + Model.formatBytes(hw.zram.origBytes) + " / " + Model.formatBytes(hw.zram.sizeBytes)) : "–"
                     color: root.baseColor
                     font.family: root.fontFamily
-                    font.pixelSize: Style.font.caption
+                    font.pixelSize: Style.font.bodySmall
                     font.bold: true
                   }
                 }
 
                 Rectangle {
                   width: parent.width
-                  height: Style.space(6)
+                  height: Style.space(10)
                   radius: height / 2
                   color: Qt.rgba(root.baseColor.r, root.baseColor.g, root.baseColor.b, 0.12)
 
@@ -1337,7 +1327,6 @@ SidebarPopup {
                   label: "Zswap Ratio"
                   value: hw.memory ? Model.formatRatio(hw.memory.zswappedKib * 1024, hw.memory.zswapKib * 1024) : "–"
                 }
-              }
               }
 
             }
