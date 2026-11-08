@@ -12,7 +12,7 @@
     "bar-widget"
   ],
   "entryPoints": {
-    "barWidget": "Widget.qml"
+    "barWidget": "qml/Widget.qml"
   },
   "barWidget": {
     "displayName": "Smon",

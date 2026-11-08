@@ -67,6 +67,15 @@ The full settings schema is in [manifest.json](manifest.json). Display modes mai
 omarchy plugin update archy.smon
 ```
 
+## Project structure
+
+```text
+manifest.json       Plugin identity, entry point, and settings
+qml/                Widget, popup, service, and shared model
+scripts/            Hardware, storage, and process helpers
+assets/previews/    Upstream screenshots
+```
+
 ## Local development
 
 ```bash
@@ -79,7 +88,8 @@ To install local changes, copy the runtime files into the plugin directory:
 
 ```bash
 mkdir -p ~/.config/omarchy/plugins/archy.smon
-cp manifest.json Widget.qml SystemPanel.qml SidebarPopup.qml Service.qml Model.js Gauge.qml Dial.qml hw-probe disk-probe proc_top.py ~/.config/omarchy/plugins/archy.smon/
+cp manifest.json ~/.config/omarchy/plugins/archy.smon/
+cp -r qml scripts ~/.config/omarchy/plugins/archy.smon/
 omarchy restart shell
 ```
 
@@ -93,6 +103,6 @@ Plugins run with your user permissions inside the Omarchy shell. Review code bef
 
 Smon adapts [zoltanf/omarchy-hw-monitor](https://github.com/zoltanf/omarchy-hw-monitor), which builds on [meviusisback/omarchy-hw-monitor](https://github.com/meviusisback/omarchy-hw-monitor) and [Edgar Silva's original project](https://github.com/edgarsilva/omarchy-hw-monitor).
 
-The sidebar layout and plugin identity are customized here. Existing `preview*.png` files show upstream designs, not the current Smon sidebar.
+The sidebar layout and plugin identity are customized here. Existing files under `assets/previews/` show upstream designs, not the current Smon sidebar.
 
 [MIT license](LICENSE). Original copyright notices are retained.

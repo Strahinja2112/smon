@@ -1,5 +1,5 @@
 import QtQuick
-import "../denon.bar/panels" as Motion
+import "../../denon.bar/panels" as Motion
 
 // Keep the monitor's lazy content contract inside Denon's attached drawer.
 Motion.PopupPanel {

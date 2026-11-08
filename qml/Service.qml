@@ -29,12 +29,12 @@ Item {
 
   // Resolved from this file's own location rather than spelled out, so a fork
   // that renames the plugin id does not silently lose the helper.
-  readonly property string pluginDir: {
-    var dir = String(Qt.resolvedUrl("."))
+  readonly property string scriptsDir: {
+    var dir = String(Qt.resolvedUrl("../scripts/"))
     if (dir.indexOf("file://") === 0) dir = dir.substring(7)
     return dir.replace(/\/$/, "")
   }
-  readonly property string probePath: pluginDir + "/hw-probe"
+  readonly property string probePath: scriptsDir + "/hw-probe"
 
   readonly property int intervalSec: intSetting("refreshIntervalSec", 2, 1, 60)
   // On battery the bar samples less often; never faster than the interval above.
@@ -104,7 +104,7 @@ Item {
     if (typeof value === "boolean") return value
     return String(value).trim().toLowerCase() !== "false"
   }
-  readonly property string procTopPath: pluginDir + "/proc_top.py"
+  readonly property string procTopPath: scriptsDir + "/proc_top.py"
   // nvidia-smi formats its CSV numbers with the session locale, so a
   // comma-decimal locale (de_DE, fr_FR, it_IT) turns "55.30" into "55,30" —
   // a sixth comma-separated field, after which every reading is one slot off.
@@ -143,7 +143,7 @@ Item {
   property var disks: null
   property bool disksFailed: false
   property bool disksNetworkTimedOut: false
-  readonly property string diskProbePath: pluginDir + "/disk-probe"
+  readonly property string diskProbePath: scriptsDir + "/disk-probe"
   property double _lastDiskTry: 0
 
   // Cumulative jiffies from the previous tick. CPU usage is the ratio between
