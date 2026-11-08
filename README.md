@@ -8,6 +8,7 @@ The vertical sidebar stacks each icon above a horizontal load bar and its readin
 
 - CPU load, temperature, clock speed, and history.
 - Popup overview cards for CPU usage, temperature, and used RAM, plus a five-process list by default.
+- Device model header with CPU, RAM, and primary disk details; expandable OS, kernel, Hyprland, and BIOS information when available.
 - RAM usage, swap, and supported memory compression statistics.
 - GPU metrics when supported by the hardware and driver.
 - Storage usage and top processes in the system panel.

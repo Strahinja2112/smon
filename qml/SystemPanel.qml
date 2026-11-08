@@ -41,6 +41,7 @@ SidebarPopup {
   property string ramFormat: "used/total"
   property string tempFormat: "degree-unit"
   property bool settingsOpen: false
+  property bool deviceDetailsOpen: false
 
   signal fahrenheitToggled()
 
@@ -416,11 +417,30 @@ SidebarPopup {
                 textFormat: Text.PlainText
                 width: parent.width
                 wrapMode: Text.Wrap
-                text: hw.cpuInfo && hw.cpuInfo.model ? hw.cpuInfo.model : "System Telemetry"
+                text: hw.device.model || (hw.cpuInfo && hw.cpuInfo.model ? hw.cpuInfo.model : "System Telemetry")
                 color: root.baseColor
                 font.family: root.fontFamily
                 font.pixelSize: Style.font.title
                 font.bold: true
+              }
+
+              Text {
+                textFormat: Text.PlainText
+                width: parent.width
+                wrapMode: Text.Wrap
+                text: hw.cpuInfo ? hw.cpuInfo.model + " · " + hw.cpuInfo.cores + " cores / " + hw.cpuInfo.threads + " threads" : ""
+                color: root.dimColor
+                font.family: root.fontFamily
+                font.pixelSize: Style.font.caption
+              }
+              Text {
+                textFormat: Text.PlainText
+                width: parent.width
+                wrapMode: Text.Wrap
+                text: [hw.memory ? Model.formatGibPrecise(Model.gibFromKib(hw.memory.totalKib)) + " GiB RAM" : "", hw.device.storage || ""].filter(function(part) { return part !== "" }).join(" · ")
+                color: root.dimColor
+                font.family: root.fontFamily
+                font.pixelSize: Style.font.caption
               }
 
               // Host · OS · uptime
@@ -435,6 +455,21 @@ SidebarPopup {
                 font.family: root.fontFamily
                 font.pixelSize: Style.font.caption
                 font.bold: true
+              }
+              ModeChip {
+                label: root.deviceDetailsOpen ? "Hide device details" : "Device details"
+                selected: root.deviceDetailsOpen
+                onPicked: root.deviceDetailsOpen = !root.deviceDetailsOpen
+              }
+              Text {
+                visible: root.deviceDetailsOpen
+                textFormat: Text.PlainText
+                width: parent.width
+                wrapMode: Text.Wrap
+                text: [hw.osName, hw.device.kernel ? "Kernel: " + hw.device.kernel : "", hw.device.hyprland || "", hw.device.vendor || "", hw.device.bios ? "BIOS: " + hw.device.bios + " · " + (hw.device.biosDate || "") : ""].filter(function(part) { return part !== "" }).join("\n")
+                color: root.dimColor
+                font.family: root.fontFamily
+                font.pixelSize: Style.font.caption
               }
             }
           }

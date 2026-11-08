@@ -148,7 +148,12 @@ function parseProbe(raw) {
         sizeBytes: Math.max(0, toNumberSafe(d.sizeBytes, 0))
       })
     }
-    return { ok: true, cpu: cpu, gpus: gpus, zram: zram }
+    var device = {}
+    var rawDevice = parsed.device || {}
+    ;["model", "vendor", "bios", "biosDate", "kernel", "storage", "hyprland"].forEach(function(key) {
+      device[key] = cleanString(rawDevice[key], 256) || ""
+    })
+    return { ok: true, cpu: cpu, gpus: gpus, zram: zram, device: device }
   } catch (e) {
     return empty
   }

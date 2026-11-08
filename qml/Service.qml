@@ -48,6 +48,7 @@ Item {
 
   property var probe: Model.parseProbe("")
   readonly property var cpuInfo: probe.cpu
+  readonly property var device: probe.device || ({})
   readonly property var gpuInfo: Model.pickGpu(probe.gpus, setting("gpu", "auto"))
   readonly property bool hasGpu: gpuInfo !== null
   readonly property bool gpuIsNvidia: hasGpu && String(gpuInfo.kind) === "nvidia"

@@ -283,6 +283,17 @@ done < <(tail -n +2 /proc/swaps 2>/dev/null)
 # -------------------------------------------------------------------- output
 
 printf '{'
+printf '"device": {'
+device_model=$(read_first /sys/class/dmi/id/product_version || true)
+[[ -z $device_model || $device_model == "None" ]] && device_model=$(read_first /sys/class/dmi/id/product_name || true)
+printf '"model": %s, ' "$(json_str "$device_model")"
+printf '"vendor": %s, ' "$(json_str "$(read_first /sys/class/dmi/id/sys_vendor || true)")"
+printf '"bios": %s, ' "$(json_str "$(read_first /sys/class/dmi/id/bios_version || true)")"
+printf '"biosDate": %s, ' "$(json_str "$(read_first /sys/class/dmi/id/bios_date || true)")"
+printf '"kernel": %s, ' "$(json_str "$(uname -r)")"
+printf '"storage": %s, ' "$(json_str "$(lsblk -dn -o NAME,TYPE,MODEL,SIZE 2>/dev/null | awk '$1 !~ /^zram/ && $2 == "disk" {$1=""; $2=""; sub(/^ +/, ""); print; exit}')")"
+printf '"hyprland": %s' "$(json_str "$(timeout 2 hyprctl version 2>/dev/null | head -n1 | awk '{print $1, $2}')")"
+printf '}, '
 printf '"cpu": {'
 printf '"model": %s, ' "$(json_str "$cpu_model")"
 printf '"cores": %d, ' "$cpu_cores"
