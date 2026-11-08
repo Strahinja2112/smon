@@ -839,7 +839,7 @@ SidebarPopup {
             y: sectionStack.offsetOf("dials")
             visible: root.sectionShown("dials")
             width: parent.width
-            implicitHeight: batteryRow.implicitHeight + Style.space(24)
+            implicitHeight: batteryContent.implicitHeight + Style.space(24)
             radius: Style.cornerRadius
             color: Qt.rgba(root.baseColor.r, root.baseColor.g, root.baseColor.b, 0.04)
             border.color: Qt.rgba(root.baseColor.r, root.baseColor.g, root.baseColor.b, 0.10)
@@ -851,28 +851,93 @@ SidebarPopup {
               : battery && battery.state === UPowerDeviceState.FullyCharged ? "Fully charged" : "Plugged in"
             readonly property real secondsLeft: battery ? (charging ? battery.timeToFull : battery.timeToEmpty) : 0
 
-            Row {
-              id: batteryRow
+            Column {
+              id: batteryContent
               anchors.centerIn: parent
               width: parent.width - Style.space(24)
-              spacing: Style.space(12)
-              Text {
-                textFormat: Text.PlainText
-                text: "Battery " + (dialsSection.battery ? Math.round(dialsSection.battery.percentage * 100) : 0) + "%"
-                color: root.baseColor
-                font.family: root.fontFamily
-                font.pixelSize: Style.font.bodySmall
-                font.bold: true
+              spacing: Style.space(10)
+              Row {
+                spacing: Style.space(10)
+                Text {
+                  textFormat: Text.PlainText
+                  text: "󰁹"
+                  color: Color.accent
+                  font.family: root.fontFamily
+                  font.pixelSize: Style.font.bodySmall * 1.25
+                  rightPadding: Style.space(4)
+                }
+                Text {
+                  text: "Battery"
+                  color: root.baseColor
+                  font.family: root.fontFamily
+                  font.pixelSize: Style.font.bodySmall
+                  font.bold: true
+                }
               }
-              Text {
-                width: Math.max(0, parent.width - parent.children[0].implicitWidth - parent.spacing)
-                textFormat: Text.PlainText
-                wrapMode: Text.Wrap
-                text: dialsSection.stateLabel + (dialsSection.secondsLeft > 0
-                  ? " · " + Model.formatUptime(dialsSection.secondsLeft).replace(/^up /, "") + (dialsSection.charging ? " until full" : " remaining") : "")
-                color: root.dimColor
-                font.family: root.fontFamily
-                font.pixelSize: Style.font.bodySmall
+              Row {
+                spacing: Style.space(10)
+                Text {
+                  text: (dialsSection.battery ? Math.round(dialsSection.battery.percentage * 100) : 0) + "%"
+                  color: root.baseColor
+                  font.family: root.fontFamily
+                  font.pixelSize: Style.font.title
+                  font.bold: true
+                }
+                Text {
+                  anchors.verticalCenter: parent.verticalCenter
+                  text: dialsSection.stateLabel
+                  color: root.dimColor
+                  font.family: root.fontFamily
+                  font.pixelSize: Style.font.caption
+                }
+              }
+              Rectangle {
+                width: parent.width
+                height: Style.space(10)
+                radius: height / 2
+                color: Qt.rgba(root.baseColor.r, root.baseColor.g, root.baseColor.b, 0.12)
+                Rectangle {
+                  width: parent.width * (dialsSection.battery ? Math.max(0, Math.min(1, dialsSection.battery.percentage)) : 0)
+                  height: parent.height
+                  radius: height / 2
+                  color: root.baseColor
+                }
+              }
+              Row {
+                width: parent.width
+                spacing: Style.space(16)
+                Column {
+                  width: (parent.width - parent.spacing) / 2
+                  spacing: Style.spacing.labelGap
+                  InfoPair {
+                    label: dialsSection.charging ? "Until full" : "Remaining"
+                    value: dialsSection.secondsLeft > 0 ? Model.formatUptime(dialsSection.secondsLeft).replace(/^up /, "") : "—"
+                  }
+                  InfoPair {
+                    label: "Health"
+                    value: dialsSection.battery && dialsSection.battery.healthSupported ? Math.round(dialsSection.battery.healthPercentage * 100) + "%" : "—"
+                  }
+                  InfoPair {
+                    label: "Cycles"
+                    value: root.hw.device.batteryCycles || "—"
+                  }
+                }
+                Column {
+                  width: (parent.width - parent.spacing) / 2
+                  spacing: Style.spacing.labelGap
+                  InfoPair {
+                    label: dialsSection.charging ? "Charging at" : "Power draw"
+                    value: dialsSection.battery ? dialsSection.battery.changeRate.toFixed(1) + " W" : "—"
+                  }
+                  InfoPair {
+                    label: "Energy"
+                    value: dialsSection.battery && dialsSection.battery.energyCapacity > 0 ? dialsSection.battery.energy.toFixed(1) + " / " + dialsSection.battery.energyCapacity.toFixed(1) + " Wh" : "—"
+                  }
+                  InfoPair {
+                    label: "Design"
+                    value: root.hw.device.batteryDesignWh ? root.hw.device.batteryDesignWh + " Wh" : "—"
+                  }
+                }
               }
             }
           }

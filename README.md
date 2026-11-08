@@ -8,7 +8,7 @@ The vertical sidebar stacks each icon above a horizontal load bar and its readin
 
 - CPU load, temperature, clock speed, and history.
 - A Processor card shows the CPU history graph with percentage and time axis labels.
-- Compact battery status with charge percentage, charging state, and estimated time remaining when available, plus a five-process list by default.
+- Battery card with charge bar, charging state, time estimate, power draw, health, remaining/full energy, design capacity, and cycle count where supported; a five-process list by default.
 - Device model header with the CPU model beneath it.
 - RAM usage and swap statistics.
 - Memory card with a large used/total reading, usage bar, available RAM, swap usage, and visible cache details.
