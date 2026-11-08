@@ -1796,6 +1796,58 @@ SidebarPopup {
           }
         }
 
+        Column {
+          width: parent.width
+          spacing: Style.space(8)
+          Rectangle {
+            width: parent.width
+            height: Style.space(1)
+            color: root.baseColor
+            opacity: 0.12
+          }
+          Text {
+            width: parent.width
+            textFormat: Text.PlainText
+            text: "Strahinja · Software developer"
+            color: root.baseColor
+            font.family: root.fontFamily
+            font.pixelSize: Style.font.bodySmall
+            font.bold: true
+          }
+          Text {
+            width: parent.width
+            textFormat: Text.PlainText
+            wrapMode: Text.Wrap
+            text: "Building tools for a better everyday desktop."
+            color: root.dimColor
+            font.family: root.fontFamily
+            font.pixelSize: Style.font.caption
+          }
+          Row {
+            spacing: Style.space(8)
+            ModeChip {
+              label: "Portfolio ↗"
+              activeFocusOnTab: true
+              border.width: activeFocus ? 2 : 1
+              Accessible.role: Accessible.Link
+              Accessible.name: "Strahinja's portfolio"
+              onPicked: Qt.openUrlExternally("https://strahinja.vercel.app")
+              Keys.onReturnPressed: picked()
+              Keys.onSpacePressed: picked()
+            }
+            ModeChip {
+              label: "GitHub ↗"
+              activeFocusOnTab: true
+              border.width: activeFocus ? 2 : 1
+              Accessible.role: Accessible.Link
+              Accessible.name: "Strahinja2112 on GitHub"
+              onPicked: Qt.openUrlExternally("https://github.com/strahinja2112")
+              Keys.onReturnPressed: picked()
+              Keys.onSpacePressed: picked()
+            }
+          }
+        }
+
         // Bottom breathing room spacer to guarantee zero clipping
         Item {
           width: parent.width
