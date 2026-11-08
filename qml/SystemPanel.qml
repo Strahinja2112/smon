@@ -1077,20 +1077,7 @@ SidebarPopup {
                 }
               }
 
-              Row {
-                width: parent.width
-                spacing: Style.space(16)
-                InfoPair {
-                  width: (parent.width - parent.spacing) / 2
-                  label: "Cores"
-                  value: hw.cpuInfo ? (hw.cpuInfo.cores + "C / " + hw.cpuInfo.threads + "T") : "–"
-                }
-                InfoPair {
-                  width: (parent.width - parent.spacing) / 2
-                  label: "Avg Clock"
-                  value: hw.cpuMhz > 0 ? Model.formatGhz(hw.cpuMhz) : "–"
-                }
-              }
+
             }
           }
 
