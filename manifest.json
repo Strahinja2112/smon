@@ -41,7 +41,6 @@
         "/efi"
       ],
       "panelSections": [
-        "dials",
         "processor",
         "memory",
         "storage",
@@ -190,7 +189,7 @@
         "key": "panelSections",
         "type": "string",
         "label": "Panel section order",
-        "defaultValue": "dials,processor,memory,storage,procs,gpu",
+        "defaultValue": "processor,memory,storage,procs,gpu",
         "description": "Order of the system panel sections, comma-separated. Missing ones are appended. Easier from the panel's gear settings."
       },
       {
@@ -198,7 +197,7 @@
         "type": "string",
         "label": "Hidden panel sections",
         "defaultValue": "",
-        "description": "Comma-separated panel sections to hide (dials, processor, memory, storage, procs, gpu)."
+        "description": "Comma-separated panel sections to hide (processor, memory, storage, procs, gpu)."
       },
       {
         "key": "pauseWhenIdleSec",

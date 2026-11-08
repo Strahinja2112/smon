@@ -3,7 +3,6 @@ import QtQuick.Controls as Controls
 import QtQuick.Shapes
 import Quickshell
 import Quickshell.Io
-import Quickshell.Services.UPower
 import qs.Ui
 import qs.Commons
 import "Model.js" as Model
@@ -66,7 +65,7 @@ SidebarPopup {
   readonly property var barLabels: ({ "gpu": "GPU", "cpu": "CPU", "cpu-temp": "CPU temp", "gpu-temp": "GPU temp", "ram": "RAM" })
   readonly property var dialLabels: ({ "cpu": "CPU", "ram": "RAM", "gpu": "GPU" })
   readonly property var sectionLabels: ({
-    "dials": "Battery", "processor": "Processor", "memory": "Memory & Swap",
+    "processor": "Processor", "memory": "Memory & Swap",
     "storage": "Storage", "procs": "Top processes", "gpu": "Graphics"
   })
 
@@ -111,7 +110,6 @@ SidebarPopup {
   function sectionShown(key) {
     if (!sectionWanted(key)) return false
     if (key === "gpu") return hw.hasGpu
-    if (key === "dials") return !!(UPower.displayDevice && UPower.displayDevice.isPresent)
     return true
   }
 
@@ -799,7 +797,6 @@ SidebarPopup {
 
           function sectionItem(key) {
             switch (key) {
-            case "dials": return dialsSection
             case "processor": return processorSection
             case "memory": return memorySection
             case "storage": return storageCard
@@ -831,115 +828,6 @@ SidebarPopup {
               n++
             }
             return n > 0 ? h + gap * (n - 1) : 0
-          }
-
-          // Keep the existing section key so saved order and visibility still apply.
-          Rectangle {
-            id: dialsSection
-            y: sectionStack.offsetOf("dials")
-            visible: root.sectionShown("dials")
-            width: parent.width
-            implicitHeight: batteryContent.implicitHeight + Style.space(24)
-            radius: Style.cornerRadius
-            color: Qt.rgba(root.baseColor.r, root.baseColor.g, root.baseColor.b, 0.04)
-            border.color: Qt.rgba(root.baseColor.r, root.baseColor.g, root.baseColor.b, 0.10)
-            border.width: 1
-            readonly property var battery: UPower.displayDevice
-            readonly property bool charging: battery && battery.state === UPowerDeviceState.Charging
-            readonly property string stateLabel: charging ? "Charging"
-              : battery && battery.state === UPowerDeviceState.Discharging ? "Discharging"
-              : battery && battery.state === UPowerDeviceState.FullyCharged ? "Fully charged" : "Plugged in"
-            readonly property real secondsLeft: battery ? (charging ? battery.timeToFull : battery.timeToEmpty) : 0
-
-            Column {
-              id: batteryContent
-              anchors.centerIn: parent
-              width: parent.width - Style.space(24)
-              spacing: Style.space(10)
-              Row {
-                spacing: Style.space(10)
-                Text {
-                  textFormat: Text.PlainText
-                  text: "󰁹"
-                  color: Color.accent
-                  font.family: root.fontFamily
-                  font.pixelSize: Style.font.bodySmall * 1.25
-                  rightPadding: Style.space(4)
-                }
-                Text {
-                  text: "Battery"
-                  color: root.baseColor
-                  font.family: root.fontFamily
-                  font.pixelSize: Style.font.bodySmall
-                  font.bold: true
-                }
-              }
-              Row {
-                spacing: Style.space(10)
-                Text {
-                  text: (dialsSection.battery ? Math.round(dialsSection.battery.percentage * 100) : 0) + "%"
-                  color: root.baseColor
-                  font.family: root.fontFamily
-                  font.pixelSize: Style.font.title
-                  font.bold: true
-                }
-                Text {
-                  anchors.verticalCenter: parent.verticalCenter
-                  text: dialsSection.stateLabel
-                  color: root.dimColor
-                  font.family: root.fontFamily
-                  font.pixelSize: Style.font.caption
-                }
-              }
-              Rectangle {
-                width: parent.width
-                height: Style.space(10)
-                radius: height / 2
-                color: Qt.rgba(root.baseColor.r, root.baseColor.g, root.baseColor.b, 0.12)
-                Rectangle {
-                  width: parent.width * (dialsSection.battery ? Math.max(0, Math.min(1, dialsSection.battery.percentage)) : 0)
-                  height: parent.height
-                  radius: height / 2
-                  color: root.baseColor
-                }
-              }
-              Row {
-                width: parent.width
-                spacing: Style.space(16)
-                Column {
-                  width: (parent.width - parent.spacing) / 2
-                  spacing: Style.spacing.labelGap
-                  InfoPair {
-                    label: dialsSection.charging ? "Until full" : "Remaining"
-                    value: dialsSection.secondsLeft > 0 ? Model.formatUptime(dialsSection.secondsLeft).replace(/^up /, "") : "—"
-                  }
-                  InfoPair {
-                    label: "Health"
-                    value: dialsSection.battery && dialsSection.battery.healthSupported ? Math.round(dialsSection.battery.healthPercentage * 100) + "%" : "—"
-                  }
-                  InfoPair {
-                    label: "Cycles"
-                    value: root.hw.device.batteryCycles || "—"
-                  }
-                }
-                Column {
-                  width: (parent.width - parent.spacing) / 2
-                  spacing: Style.spacing.labelGap
-                  InfoPair {
-                    label: dialsSection.charging ? "Charging at" : "Power draw"
-                    value: dialsSection.battery ? dialsSection.battery.changeRate.toFixed(1) + " W" : "—"
-                  }
-                  InfoPair {
-                    label: "Energy"
-                    value: dialsSection.battery && dialsSection.battery.energyCapacity > 0 ? dialsSection.battery.energy.toFixed(1) + " / " + dialsSection.battery.energyCapacity.toFixed(1) + " Wh" : "—"
-                  }
-                  InfoPair {
-                    label: "Design"
-                    value: root.hw.device.batteryDesignWh ? root.hw.device.batteryDesignWh + " Wh" : "—"
-                  }
-                }
-              }
-            }
           }
 
           // 4. Processor Topology & Load Average

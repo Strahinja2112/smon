@@ -284,19 +284,6 @@ done < <(tail -n +2 /proc/swaps 2>/dev/null)
 
 printf '{'
 printf '"device": {'
-battery_cycles=""
-battery_design_wh=""
-for battery_dir in /sys/class/power_supply/*; do
-  [[ $(read_first "$battery_dir/type" || true) == Battery ]] || continue
-  battery_cycles=$(read_first "$battery_dir/cycle_count" || true)
-  battery_design=$(read_first "$battery_dir/energy_full_design" || true)
-  if [[ $battery_design =~ ^[0-9]+$ ]]; then
-    battery_design_wh=$(awk -v energy="$battery_design" 'BEGIN {printf "%.1f", energy / 1000000}')
-  fi
-  break
-done
-printf '"batteryCycles": %s, ' "$(json_str "$battery_cycles")"
-printf '"batteryDesignWh": %s, ' "$(json_str "$battery_design_wh")"
 device_model=$(read_first /sys/class/dmi/id/product_version || true)
 [[ -z $device_model || $device_model == "None" ]] && device_model=$(read_first /sys/class/dmi/id/product_name || true)
 printf '"model": %s, ' "$(json_str "$device_model")"

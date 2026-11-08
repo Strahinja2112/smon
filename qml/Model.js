@@ -150,7 +150,7 @@ function parseProbe(raw) {
     }
     var device = {}
     var rawDevice = parsed.device || {}
-    ;["model", "vendor", "bios", "biosDate", "kernel", "storage", "hyprland", "batteryCycles", "batteryDesignWh"].forEach(function(key) {
+    ;["model", "vendor", "bios", "biosDate", "kernel", "storage", "hyprland"].forEach(function(key) {
       device[key] = cleanString(rawDevice[key], 256) || ""
     })
     return { ok: true, cpu: cpu, gpus: gpus, zram: zram, device: device }
@@ -682,7 +682,7 @@ function formatBytes(bytes) {
 
 var BAR_ITEMS = ["gpu", "cpu", "cpu-temp", "gpu-temp", "ram"]
 var PANEL_DIALS = ["cpu", "ram", "gpu"]
-var PANEL_SECTIONS = ["dials", "processor", "memory", "storage", "procs", "gpu"]
+var PANEL_SECTIONS = [ "processor", "memory", "storage", "procs", "gpu"]
 
 // Case is kept: mount points are case-sensitive.
 function stringList(raw) {
