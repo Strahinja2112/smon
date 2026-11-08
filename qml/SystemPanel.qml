@@ -1326,7 +1326,7 @@ SidebarPopup {
                   required property var modelData
 
                   width: parent.width
-                  spacing: Style.space(4)
+                  spacing: Style.space(10)
 
                   readonly property color fillColor: root.warm(root.baseColor,
                     Model.severity(modelData.percent, root.diskWarnPercent, root.diskCriticalPercent))
@@ -1347,7 +1347,7 @@ SidebarPopup {
 
                     Text {
                       textFormat: Text.PlainText
-                      width: Math.max(40, parent.width - diskKind.implicitWidth - diskFigs.implicitWidth - parent.spacing * 2)
+                      width: Math.max(40, parent.width - diskKind.implicitWidth - parent.spacing * 2)
                       elide: Text.ElideMiddle
                       text: modelData.title
                       color: root.baseColor
@@ -1357,21 +1357,32 @@ SidebarPopup {
                       anchors.verticalCenter: parent.verticalCenter
                     }
 
+                  }
+
+                  Row {
+                    width: parent.width
+                    spacing: Style.space(10)
                     Text {
-                      id: diskFigs
                       textFormat: Text.PlainText
-                      text: Model.formatBytes(modelData.availBytes) + " free of " + Model.formatBytes(modelData.sizeBytes)
+                      text: Model.formatBytes(modelData.usedBytes) + " / " + Model.formatBytes(modelData.sizeBytes)
                       color: fillColor
                       font.family: root.fontFamily
-                      font.pixelSize: Style.font.caption
+                      font.pixelSize: Style.font.title
                       font.bold: true
+                    }
+                    Text {
                       anchors.verticalCenter: parent.verticalCenter
+                      textFormat: Text.PlainText
+                      text: modelData.percent >= 0 ? Math.round(modelData.percent) + "%" : "–"
+                      color: root.dimColor
+                      font.family: root.fontFamily
+                      font.pixelSize: Style.font.caption
                     }
                   }
 
                   Rectangle {
                     width: parent.width
-                    height: Style.space(6)
+                    height: Style.space(10)
                     radius: height / 2
                     color: Qt.rgba(root.baseColor.r, root.baseColor.g, root.baseColor.b, 0.12)
 
@@ -1381,8 +1392,23 @@ SidebarPopup {
                       anchors.bottom: parent.bottom
                       radius: parent.radius
                       color: fillColor
-                      width: modelData.percent >= 0 ? Math.max(parent.height, Math.min(parent.width, parent.width * (modelData.percent / 100))) : 0
+                      width: modelData.percent >= 0 ? Math.max(0, Math.min(parent.width, parent.width * (modelData.percent / 100))) : 0
                       Behavior on width { enabled: root.layoutAnimated; NumberAnimation { duration: 320; easing.type: Easing.OutCubic } }
+                    }
+                  }
+
+                  Row {
+                    width: parent.width
+                    spacing: Style.space(16)
+                    InfoPair {
+                      width: (parent.width - parent.spacing) / 2
+                      label: "Available"
+                      value: Model.formatBytes(modelData.availBytes)
+                    }
+                    InfoPair {
+                      width: (parent.width - parent.spacing) / 2
+                      label: "Filesystem"
+                      value: modelData.fstype
                     }
                   }
 
@@ -1391,10 +1417,9 @@ SidebarPopup {
                     width: parent.width
                     elide: Text.ElideRight
                     text: {
-                      var parts = [modelData.model || modelData.device, modelData.fstype]
+                      var parts = [modelData.model || modelData.device]
                       if (modelData.readOnly) parts.push("read-only")
                       if (modelData.extraMounts > 0) parts.push("+" + modelData.extraMounts + (modelData.extraMounts === 1 ? " mount" : " mounts"))
-                      if (modelData.percent >= 0) parts.push(Math.round(modelData.percent) + "% used")
                       return parts.join(" · ")
                     }
                     color: Qt.darker(root.baseColor, 1.4)
