@@ -43,6 +43,32 @@ SidebarPopup {
 
   signal fahrenheitToggled()
 
+  function summaryText() {
+    var lines = [hw.device.model || "System summary", hw.cpuInfo ? hw.cpuInfo.model : "",
+      hw.osName, Model.formatUptime(hw.uptimeSec),
+      "Session: " + (hw.sessionApps >= 0 ? hw.sessionApps : "—") + " apps · " + (hw.sessionProcesses >= 0 ? hw.sessionProcesses : "—") + " processes",
+      "CPU: " + Model.formatPercent(hw.cpuPercent) + " · " + Model.formatTemp(hw.cpuTempC, fahrenheit)]
+    if (hw.memory) lines.push("RAM: " + Model.formatGibPrecise(Model.gibFromKib(hw.memory.usedKib)) + " / " + Model.formatGibPrecise(Model.gibFromKib(hw.memory.totalKib)) + " GiB")
+    Model.visibleDisks(hw.disks, diskHideMounts).forEach(function(disk) {
+      lines.push("Storage " + disk.title + ": " + Model.formatBytes(disk.usedBytes) + " / " + Model.formatBytes(disk.sizeBytes))
+    })
+    var network = loadedContent ? loadedContent.networkStats : null
+    if (network && network.interfaceName) lines.push("Network " + network.interfaceName + ": ↓ " + Model.formatBytes(network.download) + "/s · ↑ " + Model.formatBytes(network.upload) + "/s")
+    return lines.filter(function(line) { return line !== "" }).join("\n")
+  }
+
+  property string copyLabel: "Copy summary"
+  property QtObject clipboardCopy: Process {
+    onExited: function(code, status) {
+      root.copyLabel = code === 0 ? "Copied" : "Copy failed"
+      root.copyReset.restart()
+    }
+  }
+  property QtObject copyReset: Timer {
+    interval: 2000
+    onTriggered: root.copyLabel = "Copy summary"
+  }
+
   function persistSetting(key, value) {
     if (root.owner && typeof root.owner.persistSetting === "function") {
       root.owner.persistSetting(key, value)
@@ -291,6 +317,7 @@ SidebarPopup {
   content: PanelKeyCatcher {
     id: keyCatcher
     property alias sparklineBox: sparklineBox
+    property alias networkStats: networkStats
     implicitHeight: stickyHeader.implicitHeight + panelColumn.implicitHeight + stickyFooter.implicitHeight + Style.space(40)
     anchors.fill: parent
     onCloseRequested: root.close()
@@ -318,12 +345,13 @@ SidebarPopup {
       anchors.left: parent.left
       anchors.right: parent.right
       height: implicitHeight
-      implicitHeight: headerLeft.implicitHeight
+      implicitHeight: Math.max(headerLeft.implicitHeight, copyButton.implicitHeight)
 
       Row {
         id: headerLeft
         anchors.left: parent.left
-        anchors.right: parent.right
+        anchors.right: copyButton.left
+        anchors.rightMargin: Style.space(12)
         anchors.verticalCenter: parent.verticalCenter
         spacing: Style.space(10)
 
@@ -361,10 +389,35 @@ SidebarPopup {
             font.family: root.fontFamily
             font.pixelSize: Style.font.caption
           }
+          Text {
+            width: parent.width
+            textFormat: Text.PlainText
+            wrapMode: Text.Wrap
+            text: Model.formatUptime(hw.uptimeSec) + " · " + (hw.sessionApps >= 0 ? hw.sessionApps : "—") + " apps · " + (hw.sessionProcesses >= 0 ? hw.sessionProcesses : "—") + " processes"
+            color: root.dimColor
+            font.family: root.fontFamily
+            font.pixelSize: Style.font.caption
+          }
 
         }
       }
 
+      ModeChip {
+        id: copyButton
+        anchors.top: parent.top
+        anchors.right: parent.right
+        label: root.copyLabel
+        enabled: !root.clipboardCopy.running
+        activeFocusOnTab: true
+        Accessible.role: Accessible.Button
+        Accessible.name: "Copy system summary"
+        onPicked: {
+          root.clipboardCopy.command = ["wl-copy", "--", root.summaryText()]
+          root.clipboardCopy.running = true
+        }
+        Keys.onReturnPressed: picked()
+        Keys.onSpacePressed: picked()
+      }
 
     }
 
@@ -1083,6 +1136,7 @@ SidebarPopup {
                 }
               }
               NetworkSection {
+                id: networkStats
                 width: parent.width
                 active: root.open && networkSection.visible && !root.sectionCollapsed("network")
                 fontFamily: root.fontFamily

@@ -92,6 +92,8 @@ Item {
   property string hostName: ""
   property string osName: ""
   property real uptimeSec: -1
+  property int sessionApps: -1
+  property int sessionProcesses: -1
   onProcPanelOpenChanged: if (procPanelOpen) sampleSystem()
   property bool procTopFailed: false
   property string procGroupedBy: "none"
@@ -196,6 +198,29 @@ Item {
     }
     uptimeFile.reload()
     uptimeSec = Model.parseUptime(uptimeFile.text())
+    if (!sessionStats.running && Date.now() - lastSessionSample >= 5000) {
+      lastSessionSample = Date.now()
+      sessionStats.running = true
+    }
+  }
+
+  property real lastSessionSample: 0
+  Process {
+    id: sessionStats
+    command: ["/usr/bin/python3", root.scriptsDir + "/session-stats.py"]
+    stdout: StdioCollector {
+      onStreamFinished: {
+        if (root._destroyed || text.length > 1024) return
+        try {
+          var stats = JSON.parse(text)
+          root.sessionApps = Number.isInteger(stats.apps) && stats.apps >= 0 ? stats.apps : -1
+          root.sessionProcesses = Number.isInteger(stats.processes) && stats.processes >= 0 ? stats.processes : -1
+        } catch (e) {
+          root.sessionApps = -1
+          root.sessionProcesses = -1
+        }
+      }
+    }
   }
 
   // Emitted after every sample, so the open panel can follow the same tick

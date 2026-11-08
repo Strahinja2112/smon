@@ -9,6 +9,7 @@ The vertical sidebar stacks each icon above a horizontal load bar and its readin
 - CPU load, temperature, clock speed, and history.
 - A Processor card shows the CPU history graph with percentage and time axis labels.
 - Device model header with the CPU model beneath it.
+- Header session stats show uptime, distinct apps with open Hyprland windows, and system process count. Copy summary sends the current device and resource readings to the Wayland clipboard using `wl-copy`.
 - RAM usage and swap statistics.
 - Memory card with a large used/total reading, usage bar, available RAM, swap usage, and visible cache details.
 - GPU metrics when supported by the hardware and driver.
@@ -22,7 +23,7 @@ The vertical sidebar stacks each icon above a horizontal load bar and its readin
 
 The attached popup uses the sibling `denon.bar` plugin's panel components. Install Denon's bar alongside Smon to use its sidebar blending effect.
 
-An Omarchy installation with Quickshell shell plugin support. Hardware readings use Linux `/proc` and `/sys`; available metrics depend on your sensors and drivers. NVIDIA metrics require `nvidia-smi`. The process panel requires Python 3. Storage discovery uses `findmnt` and `lsblk`.
+An Omarchy installation with Quickshell shell plugin support. Hardware readings use Linux `/proc` and `/sys`; available metrics depend on your sensors and drivers. NVIDIA metrics require `nvidia-smi`. Process and session stats require Python 3. Storage discovery uses `findmnt` and `lsblk`. Copy summary requires `wl-copy`.
 
 ## Install
 
