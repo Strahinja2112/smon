@@ -919,7 +919,7 @@ SidebarPopup {
                   text: ""
                   color: Color.accent
                   font.family: root.fontFamily
-                  font.pixelSize: Style.font.bodySmall
+                  font.pixelSize: Style.font.bodySmall * 1.25
                   anchors.verticalCenter: parent.verticalCenter
                 }
 
@@ -1119,7 +1119,7 @@ SidebarPopup {
                   text: ""
                   color: Color.accent
                   font.family: root.fontFamily
-                  font.pixelSize: Style.font.bodySmall
+                  font.pixelSize: Style.font.bodySmall * 1.25
                   anchors.verticalCenter: parent.verticalCenter
                 }
 
@@ -1285,7 +1285,7 @@ SidebarPopup {
                   text: "󰋊"
                   color: Color.accent
                   font.family: root.fontFamily
-                  font.pixelSize: Style.font.bodySmall
+                  font.pixelSize: Style.font.bodySmall * 1.25
                   anchors.verticalCenter: parent.verticalCenter
                 }
 
@@ -1466,7 +1466,7 @@ SidebarPopup {
                   text: "\uf03a"
                   color: Color.accent
                   font.family: root.fontFamily
-                  font.pixelSize: Style.font.bodySmall
+                  font.pixelSize: Style.font.bodySmall * 1.25
                   anchors.verticalCenter: parent.verticalCenter
                 }
 
@@ -1653,7 +1653,7 @@ SidebarPopup {
                   text: "󰾲"
                   color: Color.accent
                   font.family: root.fontFamily
-                  font.pixelSize: Style.font.bodySmall
+                  font.pixelSize: Style.font.bodySmall * 1.25
                   anchors.verticalCenter: parent.verticalCenter
                 }
 
