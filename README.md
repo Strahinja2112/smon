@@ -15,6 +15,8 @@ The vertical sidebar stacks each icon above a horizontal load bar and its readin
 
 ## Requirements
 
+The attached popup uses the sibling `denon.bar` plugin's panel components. Install Denon's bar alongside Smon to use its sidebar blending effect.
+
 An Omarchy installation with Quickshell shell plugin support. Hardware readings use Linux `/proc` and `/sys`; available metrics depend on your sensors and drivers. NVIDIA metrics require `nvidia-smi`. The process panel requires Python 3. Storage discovery uses `findmnt` and `lsblk`.
 
 ## Install
@@ -77,7 +79,7 @@ To install local changes, copy the runtime files into the plugin directory:
 
 ```bash
 mkdir -p ~/.config/omarchy/plugins/archy.smon
-cp manifest.json Widget.qml SystemPanel.qml Service.qml Model.js Gauge.qml Dial.qml hw-probe disk-probe proc_top.py ~/.config/omarchy/plugins/archy.smon/
+cp manifest.json Widget.qml SystemPanel.qml SidebarPopup.qml Service.qml Model.js Gauge.qml Dial.qml hw-probe disk-probe proc_top.py ~/.config/omarchy/plugins/archy.smon/
 omarchy restart shell
 ```
 

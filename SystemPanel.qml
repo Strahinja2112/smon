@@ -9,7 +9,7 @@ import "Model.js" as Model
 
 // First-class Omarchy system popup panel displaying visual telemetry for CPU,
 // GPU, Memory, and live CPU load history, with an interactive settings drawer.
-KeyboardPanel {
+SidebarPopup {
   id: root
 
   required property QtObject hw
