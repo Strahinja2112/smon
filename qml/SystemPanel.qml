@@ -345,7 +345,7 @@ SidebarPopup {
   content: PanelKeyCatcher {
     id: keyCatcher
     property alias sparklineBox: sparklineBox
-    implicitHeight: panelColumn.implicitHeight + Style.space(16)
+    implicitHeight: stickyHeader.implicitHeight + panelColumn.implicitHeight + stickyFooter.implicitHeight + Style.space(40)
     anchors.fill: parent
     onCloseRequested: root.close()
     // root.owner is the Panel widget root (Widget.qml sets owner: root),
@@ -366,9 +366,135 @@ SidebarPopup {
       }
     }
 
+    // 1. Header with Processor Name and Settings Gear
+    Item {
+      id: stickyHeader
+      anchors.top: parent.top
+      anchors.left: parent.left
+      anchors.right: parent.right
+      height: implicitHeight
+      implicitHeight: Math.max(headerLeft.implicitHeight, settingsButton.implicitHeight)
+
+      Row {
+        id: headerLeft
+        anchors.left: parent.left
+        anchors.right: settingsButton.left
+        anchors.rightMargin: Style.space(10)
+        anchors.verticalCenter: parent.verticalCenter
+        spacing: Style.space(10)
+
+        Text {
+          textFormat: Text.PlainText
+          text: ""
+          color: Color.accent
+          font.family: root.fontFamily
+          font.pixelSize: Style.font.display
+          anchors.verticalCenter: parent.verticalCenter
+        }
+
+        Column {
+          width: parent.width - Style.font.display - Style.space(10)
+          anchors.verticalCenter: parent.verticalCenter
+          spacing: Style.space(2)
+
+          Text {
+            textFormat: Text.PlainText
+            width: parent.width
+            wrapMode: Text.Wrap
+            text: hw.device.model || (hw.cpuInfo && hw.cpuInfo.model ? hw.cpuInfo.model : "System Telemetry")
+            color: root.baseColor
+            font.family: root.fontFamily
+            font.pixelSize: Style.font.title
+            font.bold: true
+          }
+
+          Text {
+            textFormat: Text.PlainText
+            width: parent.width
+            wrapMode: Text.Wrap
+            text: hw.cpuInfo ? hw.cpuInfo.model : ""
+            color: root.dimColor
+            font.family: root.fontFamily
+            font.pixelSize: Style.font.caption
+          }
+
+        }
+      }
+
+      // Gear Icon for In-Panel Settings
+      ModeChip {
+        id: settingsButton
+        label: "\uF013"
+        selected: root.settingsOpen
+        anchors.right: parent.right
+        anchors.verticalCenter: parent.verticalCenter
+        onPicked: root.settingsOpen = !root.settingsOpen
+      }
+    }
+
+    Column {
+      id: stickyFooter
+      anchors.bottom: parent.bottom
+      anchors.left: parent.left
+      anchors.right: parent.right
+      spacing: Style.space(8)
+      Rectangle {
+        width: parent.width
+        height: Style.space(1)
+        color: root.baseColor
+        opacity: 0.12
+      }
+      Text {
+        width: parent.width
+        textFormat: Text.PlainText
+        text: "Strahinja · Software developer"
+        color: root.baseColor
+        font.family: root.fontFamily
+        font.pixelSize: Style.font.bodySmall
+        font.bold: true
+      }
+      Text {
+        width: parent.width
+        textFormat: Text.PlainText
+        wrapMode: Text.Wrap
+        text: "Building tools for a better everyday desktop."
+        color: root.dimColor
+        font.family: root.fontFamily
+        font.pixelSize: Style.font.caption
+      }
+      Row {
+        spacing: Style.space(8)
+        ModeChip {
+          label: "Portfolio ↗"
+          activeFocusOnTab: true
+          border.width: activeFocus ? 2 : 1
+          Accessible.role: Accessible.Link
+          Accessible.name: "Strahinja's portfolio"
+          onPicked: Qt.openUrlExternally("https://strahinja.vercel.app")
+          Keys.onReturnPressed: picked()
+          Keys.onSpacePressed: picked()
+        }
+        ModeChip {
+          label: "GitHub ↗"
+          activeFocusOnTab: true
+          border.width: activeFocus ? 2 : 1
+          Accessible.role: Accessible.Link
+          Accessible.name: "Strahinja2112 on GitHub"
+          onPicked: Qt.openUrlExternally("https://github.com/strahinja2112")
+          Keys.onReturnPressed: picked()
+          Keys.onSpacePressed: picked()
+        }
+      }
+    }
+
     Controls.ScrollView {
       id: scrollArea
-      anchors.fill: parent
+      anchors.top: stickyHeader.bottom
+      anchors.bottom: stickyFooter.top
+      anchors.left: parent.left
+      anchors.right: parent.right
+      anchors.topMargin: Style.space(12)
+      anchors.bottomMargin: Style.space(12)
       clip: true
       Controls.ScrollBar.horizontal.policy: Controls.ScrollBar.AlwaysOff
       Controls.ScrollBar.vertical.policy: panelColumn.implicitHeight > scrollArea.height ? Controls.ScrollBar.AsNeeded : Controls.ScrollBar.AlwaysOff
@@ -383,68 +509,6 @@ SidebarPopup {
         id: panelColumn
         width: scrollArea.availableWidth
         spacing: Style.space(12)
-
-        // 1. Header with Processor Name and Settings Gear
-        Item {
-          width: parent.width
-          implicitHeight: Math.max(headerLeft.implicitHeight, settingsButton.implicitHeight)
-
-          Row {
-            id: headerLeft
-            anchors.left: parent.left
-            anchors.right: settingsButton.left
-            anchors.rightMargin: Style.space(10)
-            anchors.verticalCenter: parent.verticalCenter
-            spacing: Style.space(10)
-
-            Text {
-              textFormat: Text.PlainText
-              text: ""
-              color: Color.accent
-              font.family: root.fontFamily
-              font.pixelSize: Style.font.display
-              anchors.verticalCenter: parent.verticalCenter
-            }
-
-            Column {
-              width: parent.width - Style.font.display - Style.space(10)
-              anchors.verticalCenter: parent.verticalCenter
-              spacing: Style.space(2)
-
-              Text {
-                textFormat: Text.PlainText
-                width: parent.width
-                wrapMode: Text.Wrap
-                text: hw.device.model || (hw.cpuInfo && hw.cpuInfo.model ? hw.cpuInfo.model : "System Telemetry")
-                color: root.baseColor
-                font.family: root.fontFamily
-                font.pixelSize: Style.font.title
-                font.bold: true
-              }
-
-              Text {
-                textFormat: Text.PlainText
-                width: parent.width
-                wrapMode: Text.Wrap
-                text: hw.cpuInfo ? hw.cpuInfo.model : ""
-                color: root.dimColor
-                font.family: root.fontFamily
-                font.pixelSize: Style.font.caption
-              }
-
-            }
-          }
-
-          // Gear Icon for In-Panel Settings
-          ModeChip {
-            id: settingsButton
-            label: "\uF013"
-            selected: root.settingsOpen
-            anchors.right: parent.right
-            anchors.verticalCenter: parent.verticalCenter
-            onPicked: root.settingsOpen = !root.settingsOpen
-          }
-        }
 
         // Animated Settings Drawer
         Rectangle {
@@ -1792,58 +1856,6 @@ SidebarPopup {
                   InfoPair { label: "Driver"; value: hw.gpuInfo && hw.gpuInfo.kind ? String(hw.gpuInfo.kind) : "–" }
                 }
               }
-            }
-          }
-        }
-
-        Column {
-          width: parent.width
-          spacing: Style.space(8)
-          Rectangle {
-            width: parent.width
-            height: Style.space(1)
-            color: root.baseColor
-            opacity: 0.12
-          }
-          Text {
-            width: parent.width
-            textFormat: Text.PlainText
-            text: "Strahinja · Software developer"
-            color: root.baseColor
-            font.family: root.fontFamily
-            font.pixelSize: Style.font.bodySmall
-            font.bold: true
-          }
-          Text {
-            width: parent.width
-            textFormat: Text.PlainText
-            wrapMode: Text.Wrap
-            text: "Building tools for a better everyday desktop."
-            color: root.dimColor
-            font.family: root.fontFamily
-            font.pixelSize: Style.font.caption
-          }
-          Row {
-            spacing: Style.space(8)
-            ModeChip {
-              label: "Portfolio ↗"
-              activeFocusOnTab: true
-              border.width: activeFocus ? 2 : 1
-              Accessible.role: Accessible.Link
-              Accessible.name: "Strahinja's portfolio"
-              onPicked: Qt.openUrlExternally("https://strahinja.vercel.app")
-              Keys.onReturnPressed: picked()
-              Keys.onSpacePressed: picked()
-            }
-            ModeChip {
-              label: "GitHub ↗"
-              activeFocusOnTab: true
-              border.width: activeFocus ? 2 : 1
-              Accessible.role: Accessible.Link
-              Accessible.name: "Strahinja2112 on GitHub"
-              onPicked: Qt.openUrlExternally("https://github.com/strahinja2112")
-              Keys.onReturnPressed: picked()
-              Keys.onSpacePressed: picked()
             }
           }
         }
