@@ -15,6 +15,7 @@ The vertical sidebar stacks each icon above a horizontal load bar and its readin
 - Storage usage and top processes in the system panel.
 - Network download/upload rates and a 60-second traffic graph, sampled every two seconds while the section is visible. The default IPv4 route selects the interface; otherwise the busiest observed interface is shown. Counters come from `/proc`, with no external requests.
 - Processes use aligned App, CPU, and RAM columns, always group by app, and provide sort controls beside the section title.
+- Click a process row to expand its command, PID, and share of RAM. For grouped apps, the command and PID belong to the largest memory user; resource totals cover the whole group. Commands are read locally from `/proc` only when expanded.
 - Theme colors, configurable item order, and panel sections.
 - Horizontal bar support with icons, compact, full, and label modes.
 

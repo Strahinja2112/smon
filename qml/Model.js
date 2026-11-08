@@ -703,6 +703,10 @@ function networkRate(previous, current, seconds) {
            tx: Math.max(0, (current.tx - previous.tx) / seconds) }
 }
 
+function processCommand(raw) {
+  return String(raw || "").slice(0, 4096).replace(/\0/g, " ").replace(/[\x01-\x1f\x7f]/g, " ").trim()
+}
+
 // Case is kept: mount points are case-sensitive.
 function stringList(raw) {
   if (raw === undefined || raw === null) return []
