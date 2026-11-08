@@ -43,6 +43,7 @@
         "processor",
         "memory",
         "storage",
+        "network",
         "procs",
         "gpu"
       ],
@@ -181,7 +182,7 @@
         "key": "panelSections",
         "type": "string",
         "label": "Panel section order",
-        "defaultValue": "processor,memory,storage,procs,gpu",
+        "defaultValue": "processor,memory,storage,network,procs,gpu",
         "description": "Order of the system panel sections, comma-separated. Missing ones are appended. Easier from the panel's gear settings."
       },
       {
@@ -189,7 +190,7 @@
         "type": "string",
         "label": "Hidden panel sections",
         "defaultValue": "",
-        "description": "Comma-separated panel sections to hide (processor, memory, storage, procs, gpu)."
+        "description": "Comma-separated panel sections to hide (processor, memory, storage, network, procs, gpu)."
       },
       {
         "key": "pauseWhenIdleSec",
@@ -203,7 +204,7 @@
         "type": "string",
         "label": "Folded panel sections",
         "defaultValue": "",
-        "description": "Comma-separated panel sections shown folded to their header (processor, memory, storage, procs, gpu). Clicking a section's header edits this."
+        "description": "Comma-separated panel sections shown folded to their header (processor, memory, storage, network, procs, gpu). Clicking a section's header edits this."
       },
       {
         "key": "panelDials",

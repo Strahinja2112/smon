@@ -682,7 +682,26 @@ function formatBytes(bytes) {
 
 var BAR_ITEMS = ["gpu", "cpu", "cpu-temp", "gpu-temp", "ram"]
 var PANEL_DIALS = ["cpu", "ram", "gpu"]
-var PANEL_SECTIONS = [ "processor", "memory", "storage", "procs", "gpu"]
+var PANEL_SECTIONS = [ "processor", "memory", "storage", "network", "procs", "gpu"]
+
+function parseNetwork(raw) {
+  var devices = {}
+  String(raw || "").split("\n").forEach(function(line) {
+    var parts = line.trim().split(":")
+    if (parts.length !== 2 || parts[0] === "lo") return
+    var fields = parts[1].trim().split(/\s+/)
+    var rx = Number(fields[0]), tx = Number(fields[8])
+    if (fields.length >= 16 && isFinite(rx) && isFinite(tx) && rx >= 0 && tx >= 0)
+      devices[parts[0]] = { rx: rx, tx: tx }
+  })
+  return devices
+}
+
+function networkRate(previous, current, seconds) {
+  if (!previous || !current || !isFinite(seconds) || seconds <= 0) return { rx: 0, tx: 0 }
+  return { rx: Math.max(0, (current.rx - previous.rx) / seconds),
+           tx: Math.max(0, (current.tx - previous.tx) / seconds) }
+}
 
 // Case is kept: mount points are case-sensitive.
 function stringList(raw) {

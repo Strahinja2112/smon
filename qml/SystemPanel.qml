@@ -66,7 +66,7 @@ SidebarPopup {
   readonly property var dialLabels: ({ "cpu": "CPU", "ram": "RAM", "gpu": "GPU" })
   readonly property var sectionLabels: ({
     "processor": "Processor", "memory": "Memory & Swap",
-    "storage": "Storage", "procs": "Top processes", "gpu": "Graphics"
+    "storage": "Storage", "network": "Network", "procs": "Top processes", "gpu": "Graphics"
   })
 
   // Bar items keep their original per-item switches as the visibility store.
@@ -800,6 +800,7 @@ SidebarPopup {
             case "processor": return processorSection
             case "memory": return memorySection
             case "storage": return storageCard
+            case "network": return networkSection
             case "procs": return procsSection
             case "gpu": return gpuSection
             }
@@ -1374,6 +1375,58 @@ SidebarPopup {
                 color: Qt.darker(root.baseColor, 1.4)
                 font.family: root.fontFamily
                 font.pixelSize: Style.font.caption
+              }
+            }
+          }
+
+          Rectangle {
+            id: networkSection
+            y: sectionStack.offsetOf("network")
+            visible: root.sectionShown("network")
+            width: parent.width
+            implicitHeight: (root.sectionCollapsed("network") ? networkTitle.implicitHeight : networkColumn.implicitHeight) + Style.space(24)
+            clip: true
+            radius: Style.cornerRadius
+            color: Qt.rgba(root.baseColor.r, root.baseColor.g, root.baseColor.b, 0.04)
+            border.color: Qt.rgba(root.baseColor.r, root.baseColor.g, root.baseColor.b, 0.10)
+            border.width: 1
+            MouseArea {
+              anchors.left: parent.left
+              anchors.right: parent.right
+              anchors.top: parent.top
+              height: networkTitle.implicitHeight + Style.space(18)
+              cursorShape: Qt.PointingHandCursor
+              onClicked: root.toggleCollapsed("network")
+            }
+            Column {
+              id: networkColumn
+              anchors.fill: parent
+              anchors.margins: Style.space(12)
+              spacing: Style.space(10)
+              Row {
+                id: networkTitle
+                spacing: Style.space(6)
+                Text {
+                  text: "󰖩"
+                  color: Color.accent
+                  font.family: root.fontFamily
+                  font.pixelSize: Style.font.bodySmall * 1.25
+                  rightPadding: Style.space(4)
+                }
+                Text {
+                  text: "Network"
+                  color: root.baseColor
+                  font.family: root.fontFamily
+                  font.pixelSize: Style.font.bodySmall
+                  font.bold: true
+                  anchors.verticalCenter: parent.verticalCenter
+                }
+              }
+              NetworkSection {
+                width: parent.width
+                active: root.open && networkSection.visible && !root.sectionCollapsed("network")
+                fontFamily: root.fontFamily
+                foreground: root.baseColor
               }
             }
           }
