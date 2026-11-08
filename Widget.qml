@@ -648,7 +648,7 @@ Panel {
           id: verticalGroup
           required property string modelData
           readonly property var cellData: root.cellFor(modelData)
-          width: root.barSize
+          width: root.bar ? root.bar.barSize : Style.bar.sizeVertical
           spacing: Style.space(4)
 
           Rectangle {
