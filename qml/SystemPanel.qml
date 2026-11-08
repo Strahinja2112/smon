@@ -1428,6 +1428,7 @@ SidebarPopup {
                 }
 
                 Text {
+                  id: procTopTitle
                   textFormat: Text.PlainText
                   text: "Top processes"
                   color: root.baseColor
@@ -1435,6 +1436,11 @@ SidebarPopup {
                   font.pixelSize: Style.font.bodySmall
                   font.bold: true
                   anchors.verticalCenter: parent.verticalCenter
+                }
+
+                Item {
+                  width: Math.max(0, parent.width - procTopIcon.implicitWidth - procTopTitle.implicitWidth - sortCpuChip.implicitWidth - sortRamChip.implicitWidth - parent.spacing * 4)
+                  height: 1
                 }
 
                 ModeChip {
