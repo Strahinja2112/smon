@@ -3,6 +3,7 @@ import QtQuick.Controls as Controls
 import QtQuick.Shapes
 import Quickshell
 import Quickshell.Io
+import Quickshell.Services.UPower
 import qs.Ui
 import qs.Commons
 import "Model.js" as Model
@@ -65,7 +66,7 @@ SidebarPopup {
   readonly property var barLabels: ({ "gpu": "GPU", "cpu": "CPU", "cpu-temp": "CPU temp", "gpu-temp": "GPU temp", "ram": "RAM" })
   readonly property var dialLabels: ({ "cpu": "CPU", "ram": "RAM", "gpu": "GPU" })
   readonly property var sectionLabels: ({
-    "dials": "Overview", "processor": "Processor", "memory": "Memory & Swap",
+    "dials": "Battery", "processor": "Processor", "memory": "Memory & Swap",
     "storage": "Storage", "procs": "Top processes", "gpu": "Graphics"
   })
 
@@ -110,7 +111,7 @@ SidebarPopup {
   function sectionShown(key) {
     if (!sectionWanted(key)) return false
     if (key === "gpu") return hw.hasGpu
-    if (key === "dials") return true
+    if (key === "dials") return !!(UPower.displayDevice && UPower.displayDevice.isPresent)
     return true
   }
 
@@ -832,50 +833,46 @@ SidebarPopup {
             return n > 0 ? h + gap * (n - 1) : 0
           }
 
-          // 2. Primary Telemetry Dials, in the order and selection from the drawer
-          Row {
+          // Keep the existing section key so saved order and visibility still apply.
+          Rectangle {
             id: dialsSection
             y: sectionStack.offsetOf("dials")
             visible: root.sectionShown("dials")
             width: parent.width
-            spacing: Style.space(8)
-            Behavior on y { enabled: root.layoutAnimated && !root.folding; NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+            implicitHeight: batteryRow.implicitHeight + Style.space(24)
+            radius: Style.cornerRadius
+            color: Qt.rgba(root.baseColor.r, root.baseColor.g, root.baseColor.b, 0.04)
+            border.color: Qt.rgba(root.baseColor.r, root.baseColor.g, root.baseColor.b, 0.10)
+            border.width: 1
+            readonly property var battery: UPower.displayDevice
+            readonly property bool charging: battery && battery.state === UPowerDeviceState.Charging
+            readonly property string stateLabel: charging ? "Charging"
+              : battery && battery.state === UPowerDeviceState.Discharging ? "Discharging"
+              : battery && battery.state === UPowerDeviceState.FullyCharged ? "Fully charged" : "Plugged in"
+            readonly property real secondsLeft: battery ? (charging ? battery.timeToFull : battery.timeToEmpty) : 0
 
-            Repeater {
-              model: ["cpu", "temperature"]
-              delegate: Rectangle {
-                required property string modelData
-                width: (dialsSection.width - dialsSection.spacing) / 2
-                implicitHeight: summaryColumn.implicitHeight + Style.space(24)
-                radius: Style.cornerRadius
-                color: Qt.rgba(root.baseColor.r, root.baseColor.g, root.baseColor.b, 0.04)
-
-                Column {
-                  id: summaryColumn
-                  anchors.centerIn: parent
-                  width: parent.width - Style.space(24)
-                  spacing: Style.space(6)
-                  Text {
-                    width: parent.width
-                    textFormat: Text.PlainText
-                    text: modelData === "cpu" ? "CPU usage" : "Temperature"
-                    color: root.dimColor
-                    font.family: root.fontFamily
-                    font.pixelSize: Style.font.caption
-                  }
-                  Text {
-                    width: parent.width
-                    textFormat: Text.PlainText
-                    text: modelData === "cpu" ? Model.formatPercent(root.hw.cpuPercent)
-                      : (root.hw.cpuTempC > 0 ? Model.formatTemp(root.hw.cpuTempC, root.fahrenheit) : "—")
-                    color: root.baseColor
-                    font.family: root.fontFamily
-                    font.pixelSize: Style.font.body * 1.6
-                    font.bold: true
-                    fontSizeMode: Text.Fit
-                    minimumPixelSize: Style.font.bodySmall
-                  }
-                }
+            Row {
+              id: batteryRow
+              anchors.centerIn: parent
+              width: parent.width - Style.space(24)
+              spacing: Style.space(12)
+              Text {
+                textFormat: Text.PlainText
+                text: "Battery " + (dialsSection.battery ? Math.round(dialsSection.battery.percentage * 100) : 0) + "%"
+                color: root.baseColor
+                font.family: root.fontFamily
+                font.pixelSize: Style.font.bodySmall
+                font.bold: true
+              }
+              Text {
+                width: Math.max(0, parent.width - parent.children[0].implicitWidth - parent.spacing)
+                textFormat: Text.PlainText
+                wrapMode: Text.Wrap
+                text: dialsSection.stateLabel + (dialsSection.secondsLeft > 0
+                  ? " · " + Model.formatUptime(dialsSection.secondsLeft).replace(/^up /, "") + (dialsSection.charging ? " until full" : " remaining") : "")
+                color: root.dimColor
+                font.family: root.fontFamily
+                font.pixelSize: Style.font.bodySmall
               }
             }
           }
