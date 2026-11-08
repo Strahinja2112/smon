@@ -393,7 +393,7 @@ SidebarPopup {
         width: parent.width
         textFormat: Text.PlainText
         wrapMode: Text.Wrap
-        text: "Building web, desktop, and mobile apps with clean interfaces and maintainable code."
+        text: "Building professional grade software since 2020."
         color: root.dimColor
         font.family: root.fontFamily
         font.pixelSize: Style.font.caption
