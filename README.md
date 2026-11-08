@@ -2,7 +2,7 @@
 
 A system monitor plugin for the Omarchy bar and sidebar. Plugin ID: `archy.smon`.
 
-The vertical sidebar stacks CPU temperature below the CPU icon and used memory below the RAM icon. Small gauges beside the icons show load, with smaller readings, extra vertical padding, and a divider before RAM. Clicking the widget opens a detailed system panel.
+The vertical sidebar stacks each icon above a horizontal load bar and its reading: CPU temperature or used RAM. Smaller readings, extra vertical padding, and a divider before RAM keep the groups distinct. Clicking the widget opens a detailed system panel.
 
 ## Features
 

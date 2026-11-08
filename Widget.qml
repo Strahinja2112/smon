@@ -659,25 +659,27 @@ Panel {
             color: root.dim
             opacity: 0.55
           }
-          Row {
+          OpticalGlyph {
             anchors.horizontalCenter: parent.horizontalCenter
-            spacing: Style.space(4)
-            OpticalGlyph {
-              width: root.glyphBox
-              height: root.glyphBox
-              text: verticalGroup.cellData.icon
-              fontFamily: root.fontFamily
-              fontSize: root.iconSize
+            width: root.glyphBox
+            height: root.glyphBox
+            text: verticalGroup.cellData.icon
+            fontFamily: root.fontFamily
+            fontSize: root.iconSize
+            color: root.warm(root.base, verticalGroup.cellData.severity)
+          }
+          Rectangle {
+            visible: root.showGauges
+            anchors.horizontalCenter: parent.horizontalCenter
+            width: parent.width * 0.6
+            height: Style.space(4)
+            radius: height / 2
+            color: Qt.rgba(root.base.r, root.base.g, root.base.b, 0.14)
+            Rectangle {
+              width: parent.width * Math.max(0, Math.min(1, verticalGroup.cellData.ratio))
+              height: parent.height
+              radius: height / 2
               color: root.warm(root.base, verticalGroup.cellData.severity)
-            }
-            Gauge {
-              visible: root.showGauges
-              height: root.glyphBox
-              bodyWidth: root.gaugeWidth
-              bodyHeight: root.gaugeHeight
-              ratio: verticalGroup.cellData.ratio
-              fillColor: root.warm(root.base, verticalGroup.cellData.severity)
-              glow: verticalGroup.cellData.severity >= 1
             }
           }
           Text {
