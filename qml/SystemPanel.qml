@@ -65,7 +65,7 @@ SidebarPopup {
   readonly property var barLabels: ({ "gpu": "GPU", "cpu": "CPU", "cpu-temp": "CPU temp", "gpu-temp": "GPU temp", "ram": "RAM" })
   readonly property var dialLabels: ({ "cpu": "CPU", "ram": "RAM", "gpu": "GPU" })
   readonly property var sectionLabels: ({
-    "dials": "Overview", "history": "CPU history", "processor": "Processor", "memory": "Memory & Swap",
+    "dials": "Overview", "processor": "Processor", "memory": "Memory & Swap",
     "storage": "Storage", "procs": "Top processes", "gpu": "Graphics"
   })
 
@@ -799,7 +799,6 @@ SidebarPopup {
           function sectionItem(key) {
             switch (key) {
             case "dials": return dialsSection
-            case "history": return historySection
             case "processor": return processorSection
             case "memory": return memorySection
             case "storage": return storageCard
@@ -882,14 +881,14 @@ SidebarPopup {
             }
           }
 
-          // 3. CPU Load History Sparkline (60s)
+          // 4. Processor Topology & Load Average
           Rectangle {
-            id: historySection
-            y: sectionStack.offsetOf("history")
-            visible: root.sectionShown("history")
+            id: processorSection
+            y: sectionStack.offsetOf("processor")
+            visible: root.sectionShown("processor")
             Behavior on y { enabled: root.layoutAnimated && !root.folding; NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
             width: parent.width
-            implicitHeight: (root.sectionCollapsed("history") ? sparklineCol.children[0].implicitHeight : sparklineCol.implicitHeight) + Style.space(24)
+            implicitHeight: (root.sectionCollapsed("processor") ? procCol.children[0].implicitHeight : procCol.implicitHeight) + Style.space(24)
             clip: true
             Behavior on implicitHeight { enabled: root.layoutAnimated; NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
             color: Qt.rgba(root.baseColor.r, root.baseColor.g, root.baseColor.b, 0.04)
@@ -903,17 +902,41 @@ SidebarPopup {
               anchors.left: parent.left
               anchors.right: parent.right
               anchors.top: parent.top
-              height: sparklineCol.children[0].implicitHeight + Style.space(18)
+              height: procCol.children[0].implicitHeight + Style.space(18)
               cursorShape: Qt.PointingHandCursor
-              onClicked: root.toggleCollapsed("history")
+              onClicked: root.toggleCollapsed("processor")
             }
 
             Column {
-              id: sparklineCol
+              id: procCol
               anchors.fill: parent
               anchors.margins: Style.space(12)
               clip: true  // a folded card shows only the header row
-              spacing: Style.space(8)
+              spacing: Style.space(10)
+
+              Row {
+                width: parent.width
+                spacing: Style.space(6)
+
+                Text {
+                  textFormat: Text.PlainText
+                  text: ""
+                  color: Color.accent
+                  font.family: root.fontFamily
+                  font.pixelSize: Style.font.bodySmall
+                  anchors.verticalCenter: parent.verticalCenter
+                }
+
+                Text {
+                  textFormat: Text.PlainText
+                  text: "Processor"
+                  color: root.baseColor
+                  font.family: root.fontFamily
+                  font.pixelSize: Style.font.bodySmall
+                  font.bold: true
+                  anchors.verticalCenter: parent.verticalCenter
+                }
+              }
 
               Row {
                 width: parent.width
@@ -1012,65 +1035,6 @@ SidebarPopup {
                       path: root.sparklinePoints
                     }
                   }
-                }
-              }
-            }
-          }
-
-          // 4. Processor Topology & Load Average
-          Rectangle {
-            id: processorSection
-            y: sectionStack.offsetOf("processor")
-            visible: root.sectionShown("processor")
-            Behavior on y { enabled: root.layoutAnimated && !root.folding; NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
-            width: parent.width
-            implicitHeight: (root.sectionCollapsed("processor") ? procCol.children[0].implicitHeight : procCol.implicitHeight) + Style.space(24)
-            clip: true
-            Behavior on implicitHeight { enabled: root.layoutAnimated; NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
-            color: Qt.rgba(root.baseColor.r, root.baseColor.g, root.baseColor.b, 0.04)
-            border.color: Qt.rgba(root.baseColor.r, root.baseColor.g, root.baseColor.b, 0.10)
-            border.width: 1
-            radius: Style.cornerRadius
-
-            // Header click folds/unfolds the card; declared first so the
-            // chips in the header (drawn above it) keep their own clicks.
-            MouseArea {
-              anchors.left: parent.left
-              anchors.right: parent.right
-              anchors.top: parent.top
-              height: procCol.children[0].implicitHeight + Style.space(18)
-              cursorShape: Qt.PointingHandCursor
-              onClicked: root.toggleCollapsed("processor")
-            }
-
-            Column {
-              id: procCol
-              anchors.fill: parent
-              anchors.margins: Style.space(12)
-              clip: true  // a folded card shows only the header row
-              spacing: Style.space(10)
-
-              Row {
-                width: parent.width
-                spacing: Style.space(6)
-
-                Text {
-                  textFormat: Text.PlainText
-                  text: ""
-                  color: Color.accent
-                  font.family: root.fontFamily
-                  font.pixelSize: Style.font.bodySmall
-                  anchors.verticalCenter: parent.verticalCenter
-                }
-
-                Text {
-                  textFormat: Text.PlainText
-                  text: "Processor"
-                  color: root.baseColor
-                  font.family: root.fontFamily
-                  font.pixelSize: Style.font.bodySmall
-                  font.bold: true
-                  anchors.verticalCenter: parent.verticalCenter
                 }
               }
 

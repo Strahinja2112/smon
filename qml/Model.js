@@ -682,7 +682,7 @@ function formatBytes(bytes) {
 
 var BAR_ITEMS = ["gpu", "cpu", "cpu-temp", "gpu-temp", "ram"]
 var PANEL_DIALS = ["cpu", "ram", "gpu"]
-var PANEL_SECTIONS = ["dials", "history", "processor", "memory", "storage", "procs", "gpu"]
+var PANEL_SECTIONS = ["dials", "processor", "memory", "storage", "procs", "gpu"]
 
 // Case is kept: mount points are case-sensitive.
 function stringList(raw) {
