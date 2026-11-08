@@ -436,7 +436,7 @@ SidebarPopup {
       Text {
         width: parent.width
         textFormat: Text.PlainText
-        text: "Strahinja Pavićević · Full-stack developer"
+        text: "Strahinja Pavićević · Full-stack software engineer"
         color: root.baseColor
         font.family: root.fontFamily
         font.pixelSize: Style.font.bodySmall
