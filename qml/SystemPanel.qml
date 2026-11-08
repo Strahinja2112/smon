@@ -969,7 +969,7 @@ SidebarPopup {
                 id: sparklineBox
                 x: Style.space(36)
                 width: parent.width - Style.space(36)
-                height: Style.space(55)
+                height: Style.space(110)
 
                 Repeater {
                   model: [100, 50, 0]
