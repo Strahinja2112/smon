@@ -41,8 +41,6 @@ SidebarPopup {
   property string ramFormat: "used/total"
   property string tempFormat: "degree-unit"
 
-  property string expandedProcessKey: ""
-
   signal fahrenheitToggled()
 
   function persistSetting(key, value) {
@@ -239,7 +237,6 @@ SidebarPopup {
       root.cpuHistory = [initial, initial]
     } else {
       root.cpuHistory = []
-      root.expandedProcessKey = ""
       hw.procPanelOpen = false
     }
   }
@@ -1219,10 +1216,6 @@ SidebarPopup {
                 Repeater {
                   model: hw.topProcs.length > 0 ? hw.topProcs : root.procPlaceholders
                   delegate: Column {
-                    id: processRow
-                    readonly property string processKey: modelData.name + ":" + modelData.pid
-                    readonly property bool expanded: root.expandedProcessKey === processKey
-                    function toggleDetails() { root.expandedProcessKey = expanded ? "" : processKey }
                     required property var modelData
                     required property int index
 
@@ -1242,16 +1235,7 @@ SidebarPopup {
                       Model.severity(metricVal, root.warnPercent, root.criticalPercent))
                     readonly property color sevColor: root.accentMix(combinedSev)
 
-                    Item {
-                      width: parent.width
-                      implicitHeight: processSummary.implicitHeight
-                      activeFocusOnTab: true
-                      Accessible.role: Accessible.Button
-                      Accessible.name: processRow.modelData.name + " process details"
-                      Keys.onReturnPressed: processRow.toggleDetails()
-                      Keys.onSpacePressed: processRow.toggleDetails()
                     Row {
-                      id: processSummary
                       width: parent.width
                       spacing: Style.space(10)
                       Column {
@@ -1270,7 +1254,7 @@ SidebarPopup {
                           width: parent.width
                           textFormat: Text.PlainText
                           elide: Text.ElideRight
-                          text: (processRow.expanded ? "▾ " : "▸ ") + (modelData.count > 1 ? modelData.count + " processes" : "PID " + modelData.pid)
+                          text: modelData.count > 1 ? modelData.count + " processes" : "PID " + modelData.pid
                           color: root.dimColor
                           font.family: root.fontFamily
                           font.pixelSize: Style.font.caption
@@ -1294,21 +1278,6 @@ SidebarPopup {
                         font.family: root.fontFamily
                         font.pixelSize: Style.font.bodySmall
                       }
-                    }
-
-                      MouseArea {
-                        anchors.fill: parent
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: processRow.toggleDetails()
-                      }
-                    }
-                    ProcessDetails {
-                      width: parent.width
-                      visible: processRow.expanded
-                      active: root.open && visible
-                      processData: processRow.modelData
-                      fontFamily: root.fontFamily
-                      foreground: root.baseColor
                     }
 
                     Rectangle {
