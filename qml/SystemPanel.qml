@@ -383,7 +383,7 @@ SidebarPopup {
       Text {
         width: parent.width
         textFormat: Text.PlainText
-        text: "Strahinja · Software developer"
+        text: "Strahinja Pavićević · Full-stack developer"
         color: root.baseColor
         font.family: root.fontFamily
         font.pixelSize: Style.font.bodySmall
@@ -393,7 +393,7 @@ SidebarPopup {
         width: parent.width
         textFormat: Text.PlainText
         wrapMode: Text.Wrap
-        text: "Building tools for a better everyday desktop."
+        text: "Based in Subotica, Serbia. I build web, desktop, and mobile applications with React, Next.js, Node.js, and TypeScript. I focus on clean interfaces and practical, maintainable systems, from application code to cloud infrastructure."
         color: root.dimColor
         font.family: root.fontFamily
         font.pixelSize: Style.font.caption
