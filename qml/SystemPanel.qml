@@ -967,8 +967,25 @@ SidebarPopup {
 
               Item {
                 id: sparklineBox
-                width: parent.width
+                x: Style.space(36)
+                width: parent.width - Style.space(36)
                 height: Style.space(55)
+
+                Repeater {
+                  model: [100, 50, 0]
+                  Text {
+                    required property int modelData
+                    x: -Style.space(36)
+                    y: Style.space(4) + (1 - modelData / 100) * (sparklineBox.height - Style.space(8)) - height / 2
+                    width: Style.space(30)
+                    text: modelData + "%"
+                    textFormat: Text.PlainText
+                    horizontalAlignment: Text.AlignRight
+                    color: root.dimColor
+                    font.family: root.fontFamily
+                    font.pixelSize: Style.font.caption
+                  }
+                }
 
                 // Background grid lines
                 Rectangle {
@@ -1038,14 +1055,38 @@ SidebarPopup {
                 }
               }
 
-              Column {
+              Item {
+                x: Style.space(36)
+                width: parent.width - Style.space(36)
+                implicitHeight: timeStart.implicitHeight
+                Text {
+                  id: timeStart
+                  text: Math.max(0, root.cpuHistory.length - 1) * root.hw.panelIntervalSec + "s ago"
+                  textFormat: Text.PlainText
+                  color: root.dimColor
+                  font.family: root.fontFamily
+                  font.pixelSize: Style.font.caption
+                }
+                Text {
+                  anchors.right: parent.right
+                  text: "Now"
+                  textFormat: Text.PlainText
+                  color: root.dimColor
+                  font.family: root.fontFamily
+                  font.pixelSize: Style.font.caption
+                }
+              }
+
+              Row {
                 width: parent.width
-                spacing: Style.spacing.labelGap
+                spacing: Style.space(16)
                 InfoPair {
+                  width: (parent.width - parent.spacing) / 2
                   label: "Cores"
                   value: hw.cpuInfo ? (hw.cpuInfo.cores + "C / " + hw.cpuInfo.threads + "T") : "–"
                 }
                 InfoPair {
+                  width: (parent.width - parent.spacing) / 2
                   label: "Avg Clock"
                   value: hw.cpuMhz > 0 ? Model.formatGhz(hw.cpuMhz) : "–"
                 }
