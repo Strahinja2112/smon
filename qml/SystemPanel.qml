@@ -1333,34 +1333,6 @@ SidebarPopup {
 
                   Row {
                     width: parent.width
-                    spacing: Style.space(6)
-
-                    Text {
-                      id: diskKind
-                      textFormat: Text.PlainText
-                      text: modelData.kind === "network" ? "󰒍" : (modelData.kind === "removable" ? "󰕓" : "󰋊")
-                      color: Qt.darker(root.baseColor, 1.4)
-                      font.family: root.fontFamily
-                      font.pixelSize: Style.font.bodySmall
-                      anchors.verticalCenter: parent.verticalCenter
-                    }
-
-                    Text {
-                      textFormat: Text.PlainText
-                      width: Math.max(40, parent.width - diskKind.implicitWidth - parent.spacing * 2)
-                      elide: Text.ElideMiddle
-                      text: modelData.title
-                      color: root.baseColor
-                      font.family: root.fontFamily
-                      font.pixelSize: Style.font.bodySmall
-                      font.bold: true
-                      anchors.verticalCenter: parent.verticalCenter
-                    }
-
-                  }
-
-                  Row {
-                    width: parent.width
                     spacing: Style.space(10)
                     Text {
                       textFormat: Text.PlainText
