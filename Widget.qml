@@ -647,7 +647,7 @@ Panel {
         delegate: Column {
           id: verticalGroup
           required property string modelData
-          readonly property var data: root.cellFor(modelData)
+          readonly property var cellData: root.cellFor(modelData)
           width: root.barSize
           spacing: Style.space(4)
 
@@ -662,7 +662,7 @@ Panel {
           OpticalGlyph {
             width: parent.width
             height: root.glyphBox
-            text: verticalGroup.data.icon
+            text: verticalGroup.cellData.icon
             fontFamily: root.fontFamily
             fontSize: root.iconSize
             color: root.base
@@ -674,7 +674,7 @@ Panel {
               ? (root.hw.cpuTempC > 0 ? root.tempText(root.hw.cpuTempC) : "—°C")
               : verticalGroup.modelData === "ram"
                 ? Model.gibFromKib(root.hw.memory.usedKib).toFixed(1) + "G"
-                : verticalGroup.data.value
+                : verticalGroup.cellData.value
             horizontalAlignment: Text.AlignHCenter
             color: root.base
             font.family: root.fontFamily
