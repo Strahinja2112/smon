@@ -4,7 +4,7 @@ A system monitor plugin for the Omarchy bar and sidebar. Plugin ID: `archy.smon`
 
 ![Smon sidebar and system popup](preview.png)
 
-The vertical sidebar stacks each icon above a horizontal load bar and its reading: CPU temperature or used RAM. Smaller readings, extra vertical padding, and a divider before RAM keep the groups distinct. Clicking the widget opens a detailed system panel.
+The vertical sidebar stacks each icon above a horizontal load bar and its reading: CPU temperature or used RAM. Smaller readings and a divider before RAM keep the groups distinct. Clicking the widget opens a detailed system panel.
 
 ## Features
 

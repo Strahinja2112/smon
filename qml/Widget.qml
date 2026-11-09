@@ -616,7 +616,7 @@ Panel {
     tooltipText: root.hint
     horizontalMargin: 6
     fixedWidth: root.vertical ? -1 : Math.ceil(horizontalCells.implicitWidth + button.scaledHorizontalMargin * 2)
-    fixedHeight: root.vertical ? Math.ceil(verticalCells.implicitHeight + Style.space(24)) : -1
+    fixedHeight: root.vertical ? Math.ceil(verticalCells.implicitHeight + Style.space(8)) : -1
 
     onPressed: function(pressedButton) {
       if (pressedButton === Qt.RightButton) root.cycleMode()
